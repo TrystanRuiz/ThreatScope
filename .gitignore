@@ -1,0 +1,39 @@
+# Environment variables — never commit API keys
+.env
+
+# Python virtual environment
+venv/
+env/
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Generated reports — may contain sensitive analysis data
+reports/*.md
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Streamlit cache
+.streamlit/
+
+# Logs
+*.log
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/

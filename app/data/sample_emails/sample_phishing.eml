@@ -1,0 +1,38 @@
+From: "PayPal Security" <security@paypa1-alerts.com>
+Reply-To: support@paypal-verify-account.xyz
+Return-Path: <bounce@paypa1-alerts.com>
+To: victim@example.com
+Subject: URGENT: Your account has been suspended - Verify immediately
+Date: Mon, 28 Apr 2026 09:15:00 -0500
+Message-ID: <abc123@paypa1-alerts.com>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="boundary_localsoc_sample"
+Received: from mail.paypa1-alerts.com (203.0.113.50) by mx.example.com
+Authentication-Results: mx.example.com; spf=fail smtp.mailfrom=paypa1-alerts.com; dkim=fail; dmarc=fail
+
+--boundary_localsoc_sample
+Content-Type: text/plain; charset=UTF-8
+
+Dear Customer,
+
+We have detected unusual activity on your PayPal account. Your account has been
+temporarily suspended for your protection.
+
+To restore access IMMEDIATELY or your account will be permanently closed.
+
+Click here to verify: https://paypal-secure-verify.xyz/login?token=abc123def456
+
+If you do not act now we will be forced to permanently restrict your account.
+
+PayPal Security Team
+
+File hash reference: a3f1c2d4e5b6a7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2
+CVE-2021-44228 may affect unpatched systems.
+
+--boundary_localsoc_sample
+Content-Type: application/octet-stream
+Content-Disposition: attachment; filename="Invoice_March2026.exe"
+
+FAKEBINARYDATA
+
+--boundary_localsoc_sample--

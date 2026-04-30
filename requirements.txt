@@ -1,0 +1,9 @@
+streamlit
+ollama
+pydantic
+httpx
+tldextract
+python-whois
+python-dotenv
+markdown
+weasyprint
