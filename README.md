@@ -19,7 +19,7 @@ Built for SOC analysts, security students, and homelab operators who want a prac
 
 ## Screenshots
 
-> Add screenshots here after first run.
+> 📸 Screenshots in progress — coming soon.
 
 ---
 
