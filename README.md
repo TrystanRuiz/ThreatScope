@@ -1,13 +1,10 @@
-# ThreatScope 🛡️
+# ThreatScope
 
 > Local-first AI-powered phishing analysis and security alert triage tool.
 
-![Python](https://img.shields.io/badge/Python-3.9%2B-blue?style=flat-square&logo=python)
-![Ollama](https://img.shields.io/badge/LLM-Ollama-black?style=flat-square)
-![Streamlit](https://img.shields.io/badge/UI-Streamlit-ff4b4b?style=flat-square)
-![MITRE ATT&CK](https://img.shields.io/badge/MITRE-ATT%26CK-red?style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 ![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey?style=flat-square)
+![Python](https://img.shields.io/badge/Python-3.9%2B-blue?style=flat-square)
 
 ---
 

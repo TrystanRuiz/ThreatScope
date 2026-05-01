@@ -237,12 +237,12 @@ def _render_iocs(parsed: dict):
 
     iocs = parsed.get("iocs", {})
     type_labels = {
-        "urls": "🔗 Links / URLs",
-        "domains": "🌐 Domains",
-        "ips": "📡 IP Addresses",
-        "hashes": "🔑 File Hashes",
-        "cves": "🐛 Known Vulnerabilities (CVEs)",
-        "emails": "📧 Email Addresses",
+        "urls": "Links / URLs",
+        "domains": "Domains",
+        "ips": "IP Addresses",
+        "hashes": "File Hashes",
+        "cves": "Known Vulnerabilities (CVEs)",
+        "emails": "Email Addresses",
     }
     any_found = False
     for key, label in type_labels.items():
@@ -260,7 +260,7 @@ def _render_iocs(parsed: dict):
 
     attachments = parsed.get("attachments", [])
     if attachments:
-        st.markdown('<div style="font-size:13px;color:#aaa;margin:8px 0 4px;">📎 Attachments</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-size:13px;color:#aaa;margin:8px 0 4px;">Attachments</div>', unsafe_allow_html=True)
         for a in attachments:
             danger = any(a.lower().endswith(ext) for ext in [".exe",".js",".vbs",".bat",".ps1",".hta",".docm",".xlsm",".zip",".rar"])
             st.markdown(f'<div class="ioc-row" style="color:{"#ff4b4b" if danger else "#e0e0e0"};">{"⚠️ " if danger else ""}{a}{"  — Dangerous file type" if danger else ""}</div>', unsafe_allow_html=True)
@@ -694,7 +694,7 @@ with st.sidebar:
 
 # ── Dashboard ────────────────────────────────────────────────────────────────
 if page == "Dashboard":
-    st.title("📊 Dashboard")
+    st.title("Dashboard")
     st.markdown("Overview of all analyses run with ThreatScope.")
     st.markdown("---")
 
@@ -728,9 +728,9 @@ if page == "Dashboard":
         c1, c2, c3, c4, c5 = st.columns(5)
         c1.metric("Total Analyses", total)
         c2.metric("Avg Risk Score", avg)
-        c3.metric("🔴 Critical", critical)
-        c4.metric("🟠 High", high)
-        c5.metric("🟡 Medium / 🟢 Low", f"{medium} / {low}")
+        c3.metric("Critical", critical)
+        c4.metric("High", high)
+        c5.metric("Medium / Low", f"{medium} / {low}")
 
         st.markdown("---")
         st.subheader("Risk Level Distribution")
@@ -759,7 +759,7 @@ if page == "Dashboard":
 
 # ── Batch Analysis ────────────────────────────────────────────────────────────
 elif page == "Batch Analysis":
-    st.title("📂 Batch Email Analysis")
+    st.title("Batch Email Analysis")
     st.markdown("Upload multiple `.eml` files at once. ThreatScope will analyze each one and give you a summary table of all results.")
     st.markdown("---")
 
@@ -769,7 +769,7 @@ elif page == "Batch Analysis":
         accept_multiple_files=True,
     )
 
-    if st.button("🔍 Analyze All", type="primary") and uploaded_files:
+    if st.button("Analyze All", type="primary") and uploaded_files:
         results = []
         for i, f in enumerate(uploaded_files):
             with st.status(f"Analyzing {f.name} ({i+1}/{len(uploaded_files)})...", expanded=False) as s:
@@ -816,7 +816,7 @@ elif page == "Batch Analysis":
 
 # ── Email Analyzer ────────────────────────────────────────────────────────────
 elif page == "Email Analyzer":
-    st.title("📧 Email Analyzer")
+    st.title("Email Analyzer")
     st.markdown("Paste a suspicious email below. The tool will extract any links, attachments, and sender details, check them against threat intelligence databases, and generate a plain-English security report.")
     st.markdown("---")
 
@@ -828,9 +828,9 @@ elif page == "Email Analyzer":
 
     col1, col2, col3 = st.columns([2, 2, 6])
     with col1:
-        analyze = st.button("🔍 Analyze", type="primary", use_container_width=True)
+        analyze = st.button("Analyze", type="primary", use_container_width=True)
     with col2:
-        if st.button("📄 Load Sample", use_container_width=True):
+        if st.button("Load Sample", use_container_width=True):
             if SAMPLE_PATH.exists():
                 st.session_state["email_content"] = SAMPLE_PATH.read_text()
                 st.rerun()
@@ -852,14 +852,14 @@ elif page == "Email Analyzer":
 
     if analyze and raw_email:
         with st.status("Running analysis...", expanded=True) as status:
-            st.write("📧 Parsing email structure and headers...")
+            st.write("Parsing email structure and headers...")
             parsed = parse_raw_email(raw_email)
-            st.write("🌐 Checking links and IPs against threat databases...")
-            st.write("🗺️ Identifying attack techniques...")
-            st.write("🧮 Calculating risk score...")
-            st.write("🤖 Generating report...")
+            st.write("Checking links and IPs against threat databases...")
+            st.write("Identifying attack techniques...")
+            st.write("Calculating risk score...")
+            st.write("Generating report...")
             parsed, score_result, techniques, report = _run_full_analysis(parsed)
-            status.update(label="✅ Analysis complete.", state="complete")
+            status.update(label="Analysis complete.", state="complete")
 
         st.markdown("---")
         _render_score(score_result)
@@ -886,7 +886,7 @@ elif page == "Email Analyzer":
 
 # ── IOC Lookup ────────────────────────────────────────────────────────────────
 elif page == "IOC Lookup":
-    st.title("🔍 IOC Lookup")
+    st.title("IOC Lookup")
     st.markdown("Enter a suspicious IP address, website, link, file hash, or vulnerability ID to check it against threat intelligence databases.")
     st.markdown("---")
 
@@ -896,7 +896,7 @@ elif page == "IOC Lookup":
     with col2:
         ioc_type = st.selectbox("Type", ["Auto-detect", "IP", "Domain", "URL", "Hash (MD5/SHA1/SHA256)", "CVE"])
 
-    with st.expander("ℹ️ What can I look up?"):
+    with st.expander("What can I look up?"):
         st.markdown("""
         | Type | Example | What it checks |
         |---|---|---|
@@ -907,7 +907,7 @@ elif page == "IOC Lookup":
         | **CVE** | `CVE-2021-44228` | Details on a known software vulnerability |
         """)
 
-    if st.button("🔍 Check This", type="primary") and ioc_input:
+    if st.button("Check", type="primary") and ioc_input:
         with st.spinner("Checking threat intelligence databases..."):
             result = asyncio.run(_single_lookup(ioc_input, ioc_type))
         st.markdown("---")
@@ -916,22 +916,22 @@ elif page == "IOC Lookup":
 
 # ── Alert Triage ──────────────────────────────────────────────────────────────
 elif page == "Alert Triage":
-    st.title("📋 Alert Triage")
+    st.title("Alert Triage")
     st.markdown("Paste a security alert or log entry here. The tool will extract any suspicious indicators, check them against threat databases, and tell you what to do next.")
     st.markdown("---")
 
     log_input = st.text_area("Alert or log content", height=250,
         placeholder="Paste a SIEM alert, Windows Event Log, firewall log, or any security alert here...")
 
-    if st.button("🔍 Triage This Alert", type="primary") and log_input:
+    if st.button("Triage", type="primary") and log_input:
         with st.status("Analyzing alert...", expanded=True) as status:
-            st.write("📋 Parsing alert and extracting indicators...")
-            st.write("🌐 Checking against threat intelligence...")
-            st.write("🧮 Scoring and identifying techniques...")
-            st.write("🤖 Generating triage report...")
+            st.write("Parsing alert and extracting indicators...")
+            st.write("Checking against threat intelligence...")
+            st.write("Scoring and identifying techniques...")
+            st.write("Generating triage report...")
             parsed = parse_log(log_input)
             parsed, score_result, techniques, report = _run_full_analysis(parsed)
-            status.update(label="✅ Triage complete.", state="complete")
+            status.update(label="Triage complete.", state="complete")
 
         st.markdown("---")
         _render_score(score_result)
@@ -956,7 +956,7 @@ elif page == "Alert Triage":
 
 # ── Reports ───────────────────────────────────────────────────────────────────
 elif page == "Reports":
-    st.title("📁 Saved Reports")
+    st.title("Saved Reports")
     st.markdown("Every analysis you run is automatically saved here as a Markdown file you can download.")
     st.markdown("---")
 
@@ -967,15 +967,15 @@ elif page == "Reports":
         st.caption(f"{len(reports)} report(s) saved")
         for r in reports:
             mtime = datetime.fromtimestamp(r.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
-            with st.expander(f"📄 {r.stem}  ·  {mtime}"):
+            with st.expander(f"{r.stem}  ·  {mtime}"):
                 st.markdown(r.read_text())
                 with open(r, "rb") as f:
-                    st.download_button("⬇️ Download .md", f, file_name=r.name, key=r.name)
+                    st.download_button("Download .md", f, file_name=r.name, key=r.name)
 
 
 # ── Settings ──────────────────────────────────────────────────────────────────
 elif page == "Settings":
-    st.title("⚙️ Settings")
+    st.title("Settings")
     st.markdown("---")
     st.info("To change settings, open the `.env` file in your project folder and restart the app.")
 
