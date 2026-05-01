@@ -2,10 +2,9 @@
 
 > Local-first AI-powered phishing analysis and security alert triage tool.
 
-
 ---
 
-ThreatScope is a local-first security triage assistant that analyzes suspicious emails and security alerts, extracts and defangs indicators of compromise (IOCs), enriches them with real threat intelligence, maps findings to MITRE ATT&CK, assigns an explainable risk score, and generates a plain-English SOC-style investigation report — all without sending your data to a cloud AI service.
+ThreatScope is a local-first security triage assistant that analyzes suspicious emails and security alerts, extracts and defangs indicators of compromise (IOCs), enriches them with real threat intelligence, maps findings to MITRE ATT&CK, and assigns an explainable risk score. It generates a plain-English SOC-style investigation report without sending your data to a cloud AI service.
 
 Built for SOC analysts, security students, and homelab operators who want a practical AI security tool they can run on their own machine.
 
@@ -13,23 +12,24 @@ Built for SOC analysts, security students, and homelab operators who want a prac
 
 ## Screenshots
 
-> 📸 Screenshots in progress — coming soon.
+> Screenshots coming soon.
 
 ---
 
 ## Features
 
-- **Email Analysis** — Parse raw email text or `.eml` files. Detects sender spoofing, SPF/DKIM/DMARC failures, urgency language, and suspicious attachments
-- **IOC Extraction** — Automatically extracts and defangs IPs, domains, URLs, MD5/SHA1/SHA256 hashes, CVE IDs, and email addresses
-- **Threat Intelligence Enrichment** — Real-time lookups via VirusTotal, AbuseIPDB, NVD CVE database, and WHOIS with async rate limiting
-- **MITRE ATT&CK Mapping** — Maps detected behaviors to ATT&CK techniques with plain-English explanations
-- **Explainable Risk Scoring** — Deterministic 0–100 risk score with a per-signal breakdown showing exactly why each point was added
-- **AI Investigation Report** — Local LLM (via Ollama) generates a structured SOC-style report from the evidence — no data leaves your machine
-- **Alert Triage** — Supports SIEM-style log snippets in addition to emails
-- **IOC Lookup** — One-off lookup for any IP, domain, URL, hash, or CVE
-- **Plain-English Output** — Every finding is explained in non-technical language, making it accessible to analysts at any level
-- **Report Export** — All reports saved as Markdown files, downloadable from within the app
-- **Offline Mode** — Run without API keys for testing or demos
+- **Email Analysis:** Parse raw email text or `.eml` files. Detects sender spoofing, SPF/DKIM/DMARC failures, urgency language, and suspicious attachments
+- **IOC Extraction:** Automatically extracts and defangs IPs, domains, URLs, MD5/SHA1/SHA256 hashes, CVE IDs, and email addresses
+- **Threat Intelligence Enrichment:** Real-time lookups via VirusTotal, AbuseIPDB, MalwareBazaar, NVD CVE database, and WHOIS with async rate limiting
+- **MITRE ATT&CK Mapping:** Maps detected behaviors to ATT&CK techniques with plain-English explanations and confidence scoring
+- **Explainable Risk Scoring:** Deterministic 0-100 risk score with a per-signal breakdown showing exactly why each point was added
+- **AI Investigation Report:** Local LLM via Ollama generates a structured SOC-style report from the evidence. No data leaves your machine
+- **Alert Triage:** Supports SIEM-style log snippets in addition to emails
+- **Batch Analysis:** Upload and analyze multiple `.eml` files at once with a results summary table
+- **IOC Lookup:** One-off lookup for any IP, domain, URL, hash, or CVE
+- **Plain-English Output:** Every finding is explained in non-technical language, making it accessible to analysts at any level
+- **Report Export:** All reports saved as Markdown files, downloadable from within the app
+- **Offline Mode:** Run without API keys for testing or demos
 
 ---
 
@@ -45,7 +45,7 @@ Parser extracts structure and fields
 IOC extractor finds IPs, domains, URLs, hashes, CVEs
         │
         ▼
-Threat intel enrichment (VirusTotal, AbuseIPDB, NVD, WHOIS)
+Threat intel enrichment (VirusTotal, AbuseIPDB, MalwareBazaar, NVD, WHOIS)
         │
         ▼
 MITRE ATT&CK technique mapping
@@ -60,7 +60,7 @@ Local LLM generates SOC-style investigation report
 Report saved as Markdown
 ```
 
-**Key design decision:** Python handles all evidence collection, IOC extraction, API calls, and scoring. The LLM only handles summarization and report writing. This keeps the tool fast, deterministic, and auditable.
+Python handles all evidence collection, IOC extraction, API calls, and scoring. The LLM only handles summarization and report writing. This keeps the tool fast, deterministic, and auditable.
 
 ---
 
@@ -72,6 +72,7 @@ Report saved as Markdown
 | Local LLM | Ollama + Llama 3.1 8B | AI report generation, runs fully offline |
 | Threat Intel | VirusTotal API | Domain, IP, URL, and hash reputation |
 | Threat Intel | AbuseIPDB API | IP abuse confidence scoring |
+| Threat Intel | MalwareBazaar API | File hash lookup against known malware |
 | Vulnerability DB | NVD API v2 | CVE lookup and CVSS scoring |
 | Domain Intel | python-whois | Domain registration age and registrar |
 | IOC Extraction | re, tldextract | Regex-based indicator extraction |
@@ -93,8 +94,8 @@ Report saved as Markdown
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/TrystanRuiz/threatscope.git
-cd threatscope
+git clone https://github.com/TrystanRuiz/ThreatScope.git
+cd ThreatScope
 ```
 
 ### 2. Pull the AI model
@@ -125,7 +126,8 @@ OLLAMA_BASE_URL=http://localhost:11434
 
 VT_API_KEY=your_virustotal_key_here
 ABUSEIPDB_API_KEY=your_abuseipdb_key_here
-NVD_API_KEY=your_nvd_key_here        # Optional but recommended
+NVD_API_KEY=your_nvd_key_here
+MB_API_KEY=your_malwarebazaar_key_here
 ```
 
 ### 5. Run ThreatScope
@@ -144,7 +146,8 @@ Open [http://localhost:8501](http://localhost:8501) in your browser.
 |---|---|---|---|
 | VirusTotal | Yes | 4 requests/min, 500/day | [virustotal.com](https://virustotal.com) |
 | AbuseIPDB | Yes | 1,000 checks/day | [abuseipdb.com](https://abuseipdb.com) |
-| NVD | No | Recommended for faster CVE lookups | [nvd.nist.gov](https://nvd.nist.gov/developers/request-an-api-key) |
+| MalwareBazaar | No | No hard limit | [bazaar.abuse.ch](https://bazaar.abuse.ch) |
+| NVD | No | Faster with key | [nvd.nist.gov](https://nvd.nist.gov/developers/request-an-api-key) |
 
 ThreatScope respects all free tier limits automatically via built-in rate limiting. IOCs are deduplicated before API calls to avoid wasting quota.
 
@@ -159,7 +162,7 @@ Set `OFFLINE_MODE=true` in your `.env` to run ThreatScope without any API keys. 
 ## Project Structure
 
 ```
-threatscope/
+ThreatScope/
 ├── app/
 │   ├── ui.py                   # Streamlit app entry point
 │   ├── agents/
@@ -175,6 +178,7 @@ threatscope/
 │   │   ├── virustotal.py       # VirusTotal API with rate limiting
 │   │   ├── abuseipdb.py        # AbuseIPDB IP reputation
 │   │   ├── nvd.py              # NVD CVE lookup
+│   │   ├── malwarebazaar.py    # MalwareBazaar hash lookup
 │   │   └── whois_lookup.py     # Domain age and registrar
 │   ├── schemas/
 │   │   ├── ioc_schema.py       # IOC data models
@@ -200,12 +204,12 @@ threatscope/
 ## Limitations and Responsible Use
 
 - **ThreatScope is a defensive analysis tool.** It is designed to help analysts understand suspicious content, not to generate phishing content, automate attacks, bypass security controls, or assist with any offensive activity.
-- **All findings require human review.** ThreatScope is an analyst-assistance tool. Risk scores, MITRE mappings, and LLM-generated reports are investigative aids — they are not authoritative determinations. Never take action based solely on ThreatScope output without independent verification.
+- **All findings require human review.** Risk scores, MITRE mappings, and LLM-generated reports are investigative aids and not authoritative determinations. Never take action based solely on ThreatScope output without independent verification.
 - **The LLM can hallucinate.** The local model is instructed to use only the provided evidence, but it may still produce inaccurate or misleading statements. Always cross-reference findings manually.
 - **Threat intelligence is not exhaustive.** A clean result from VirusTotal or AbuseIPDB does not guarantee that an indicator is safe. New threats may not yet be cataloged.
-- **Do not submit real sensitive data to external APIs.** If VirusTotal or AbuseIPDB enrichment is enabled, IOC values are sent to those third-party services. Do not submit client data, internal IP ranges, or proprietary information without authorization.
+- **Do not submit real sensitive data to external APIs.** If enrichment is enabled, IOC values are sent to third-party services. Do not submit client data, internal IP ranges, or proprietary information without authorization.
 - **WHOIS data may be incomplete.** WHOIS records are inconsistent across registrars. Missing registration data should be treated as unknown, not automatically suspicious.
-- **Free API tier limits apply.** ThreatScope includes built-in rate limiting and deduplication to respect free tier quotas, but heavy usage may exhaust daily limits. Monitor your API usage in each provider's dashboard.
+- **Free API tier limits apply.** ThreatScope includes built-in rate limiting and deduplication to respect free tier quotas, but heavy usage may exhaust daily limits.
 
 ---
 
@@ -213,20 +217,13 @@ threatscope/
 
 The `app/data/sample_emails/` directory contains synthetic phishing email samples for testing. These are entirely fictional and safe to use.
 
-**Do not test ThreatScope with:**
-- Real employee or customer emails
-- Internal corporate logs
-- Private IP ranges or hostnames
-- Any data you do not have authorization to analyze
+Do not test ThreatScope with real employee or customer emails, internal corporate logs, private IP ranges, or any data you do not have authorization to analyze.
 
 ---
 
 ## Roadmap
 
 - [ ] PDF report export
-- [ ] Batch `.eml` folder analysis
-- [ ] MalwareBazaar hash lookup integration
-- [ ] Dashboard with trends from saved reports
 - [ ] Wazuh/SIEM alert ingestion
 - [ ] Docker Compose setup with Ollama included
 
@@ -234,7 +231,7 @@ The `app/data/sample_emails/` directory contains synthetic phishing email sample
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for full terms.
+MIT License. See [LICENSE](LICENSE) for full terms.
 
 Copyright (c) 2026 Trystan Ruiz
 
