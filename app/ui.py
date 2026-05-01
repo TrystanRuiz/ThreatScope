@@ -34,19 +34,19 @@ st.markdown("""
 
 /* ── Cards ── */
 .card {
-    background: #181b29;
+    background: #13162a;
     border-radius: 12px;
     padding: 20px 24px;
     margin-bottom: 10px;
-    border: 1px solid #1f2235;
-    border-left: 4px solid #1f2235;
+    border: 1px solid #1e2235;
+    border-left: 4px solid #1e2235;
 }
-.card.critical { border-left-color: #ef4444; background: #1c1520; }
-.card.high     { border-left-color: #f97316; background: #1c1a17; }
-.card.medium   { border-left-color: #eab308; background: #1c1c15; }
-.card.low      { border-left-color: #22c55e; background: #151c18; }
-.card.clean    { border-left-color: #22c55e; background: #151c18; }
-.card.info     { border-left-color: #3b82f6; background: #151824; }
+.card.critical { border-left-color: #ef4444; background: #180f12; }
+.card.high     { border-left-color: #f97316; background: #18130e; }
+.card.medium   { border-left-color: #eab308; background: #17160a; }
+.card.low      { border-left-color: #22c55e; background: #0e1810; }
+.card.clean    { border-left-color: #22c55e; background: #0e1810; }
+.card.info     { border-left-color: #3b82f6; background: #0e1222; }
 .card.neutral  { border-left-color: #2a2d3e; }
 
 /* ── Typography ── */
@@ -891,381 +891,393 @@ def _save_report(parsed: dict, score_result: dict, techniques: list, report: dic
     with col2:
         _pdf_download_button(parsed, score_result, techniques, report, f"{ts}_{subject}.pdf")
 
-def _build_pdf_html(parsed: dict, score_result: dict, techniques: list, report: dict) -> str:
+def _build_pdf_html(parsed: dict, score_result: dict, techniques: list, report: dict) -> str:  # noqa: C901
     s       = score_result["score"]
     level   = score_result["level"]
     subject = parsed.get("subject", "Security Alert")
-    date    = datetime.now().strftime("%B %d, %Y  %H:%M")
+    date    = datetime.now().strftime("%B %d, %Y at %H:%M")
 
-    score_color = {
-        "Critical": "#ef4444",
-        "High":     "#f97316",
-        "Medium":   "#eab308",
-        "Low":      "#22c55e",
-    }.get(level, "#6b7280")
+    score_color = {"Critical":"#ef4444","High":"#f97316","Medium":"#eab308","Low":"#22c55e"}.get(level,"#6b7280")
 
-    score_bg = {
-        "Critical": "#1c0a0a",
-        "High":     "#1c1208",
-        "Medium":   "#1a1a08",
-        "Low":      "#0a1c10",
-    }.get(level, "#111")
+    def _ioc_val(item):
+        return item.get("defanged", item.get("value","")) if isinstance(item, dict) else item
 
-    def _rows(items, label=""):
-        return "".join(f"<tr><td>{label}</td><td class='mono'>{i}</td></tr>" for i in items) if items else ""
+    iocs = parsed.get("iocs", {})
 
-    iocs        = parsed.get("iocs", {})
-    url_rows    = _rows([u.get("defanged", u.get("value","")) if isinstance(u,dict) else u for u in iocs.get("urls",[])],    "URL")
-    domain_rows = _rows([d.get("defanged", d.get("value","")) if isinstance(d,dict) else d for d in iocs.get("domains",[])], "Domain")
-    ip_rows     = _rows([i.get("defanged", i.get("value","")) if isinstance(i,dict) else i for i in iocs.get("ips",[])],     "IP")
-    hash_rows   = _rows([h.get("value","")                    if isinstance(h,dict) else h for h in iocs.get("hashes",[])],  "Hash")
-    cve_rows    = _rows(iocs.get("cves",[]),  "CVE")
-    email_rows  = _rows(iocs.get("emails",[]),"Email")
-    attach_rows = _rows(parsed.get("attachments",[]), "Attachment")
-    all_ioc_rows = url_rows + domain_rows + ip_rows + hash_rows + cve_rows + email_rows + attach_rows
+    def _ioc_block(label, items):
+        if not items:
+            return ""
+        vals = "".join(f"<div class='ioc-item'>{_ioc_val(i)}</div>" for i in items)
+        return f"<div class='ioc-group'><div class='ioc-label'>{label}</div>{vals}</div>"
 
-    breakdown_rows = "".join(
-        f"<tr><td>{k.replace('_',' ').title()}</td><td style='color:{score_color}; font-weight:700;'>+{v}</td></tr>"
-        for k, v in score_result["breakdown"].items() if v > 0
-    )
+    ioc_html = (
+        _ioc_block("URLs", iocs.get("urls", []))
+        + _ioc_block("Domains", iocs.get("domains", []))
+        + _ioc_block("IP Addresses", iocs.get("ips", []))
+        + _ioc_block("File Hashes", iocs.get("hashes", []))
+        + _ioc_block("CVEs", [{"value": c} for c in iocs.get("cves", [])])
+        + _ioc_block("Email Addresses", [{"value": e} for e in iocs.get("emails", [])])
+        + _ioc_block("Attachments", [{"value": a} for a in parsed.get("attachments", [])])
+    ) or "<p class='none'>No indicators extracted.</p>"
 
-    mitre_rows = "".join(
-        f"<tr><td class='mono' style='color:#3b82f6; font-weight:700;'>{t['id']}</td>"
-        f"<td>{t['name']}</td>"
-        f"<td><span class='badge badge-{'red' if t['confidence']=='high' else 'yellow' if t['confidence']=='medium' else 'gray'}'>{t['confidence'].capitalize()}</span></td>"
-        f"<td style='color:#666; font-size:12px;'>{MITRE_PLAIN.get(t['id'],'')}</td></tr>"
-        for t in techniques
-    ) if techniques else "<tr><td colspan='4' style='color:#999;'>No techniques mapped.</td></tr>"
+    def _score_signal(k, v):
+        return f"<div class='signal-row'><span class='signal-name'>{k.replace('_',' ').title()}</span><span class='signal-pts' style='color:{score_color};'>+{v}</span></div>"
+
+    breakdown_html = "".join(_score_signal(k, v) for k, v in score_result["breakdown"].items() if v > 0) \
+                     or "<p class='none'>No signals triggered.</p>"
+
+    def _mitre_row(t):
+        conf_color = {"high":"#dc2626","medium":"#d97706","low":"#6b7280"}.get(t["confidence"],"#6b7280")
+        return (f"<tr><td class='td-id'>{t['id']}</td>"
+                f"<td class='td-name'>{t['name']}</td>"
+                f"<td><span style='color:{conf_color}; font-weight:700; font-size:11px;'>{t['confidence'].upper()}</span></td>"
+                f"<td class='td-desc'>{MITRE_PLAIN.get(t['id'],'')}</td></tr>")
+
+    mitre_html = "".join(_mitre_row(t) for t in techniques) \
+                 or "<tr><td colspan='4' class='none'>No techniques mapped.</td></tr>"
 
     findings_html = "".join(f"<li>{f}</li>" for f in report.get("technical_findings", []))
     actions_html  = "".join(f"<li>{a}</li>" for a in report.get("recommended_actions", []))
 
-    vt_results  = [r for r in parsed.get("vt_results",   []) if not r.get("skipped")]
-    ab_results  = [r for r in parsed.get("abuse_results",[]) if not r.get("skipped")]
-    nvd_results = [r for r in parsed.get("nvd_results",  []) if not r.get("skipped")]
-    wh_results  =  parsed.get("whois_results", [])
-
-    def _enrich_row(label, ioc, value, note=""):
-        return f"<tr><td>{label}</td><td class='mono' style='font-size:11px;'>{ioc}</td><td>{value}</td><td style='color:#666; font-size:12px;'>{note}</td></tr>"
+    def _enrich_row(source, ioc, result, note):
+        return (f"<tr><td class='td-source'>{source}</td>"
+                f"<td class='td-ioc'>{ioc[:50]}</td>"
+                f"<td>{result}</td>"
+                f"<td class='td-note'>{note}</td></tr>")
 
     enrich_rows = ""
-    for r in vt_results:
-        mal = r.get("malicious",0); total = mal + r.get("suspicious",0) + r.get("harmless",0)
-        enrich_rows += _enrich_row("VirusTotal", r.get("ioc",""), f"{mal} / {total} vendors", "Malicious" if mal >= 3 else "Suspicious" if mal >= 1 else "Clean")
-    for r in ab_results:
-        enrich_rows += _enrich_row("AbuseIPDB", r.get("ioc",""), f"{r.get('abuse_confidence',0)}% confidence", f"{r.get('total_reports',0)} reports / {r.get('country','?')}")
-    for r in wh_results:
+    for r in [x for x in parsed.get("vt_results",[]) if not x.get("skipped")]:
+        mal = r.get("malicious",0); total = mal+r.get("suspicious",0)+r.get("harmless",0)
+        enrich_rows += _enrich_row("VirusTotal", r.get("ioc",""), f"{mal}/{total} vendors flagged",
+                                   "Malicious" if mal>=3 else "Suspicious" if mal>=1 else "Clean")
+    for r in [x for x in parsed.get("abuse_results",[]) if not x.get("skipped")]:
+        enrich_rows += _enrich_row("AbuseIPDB", r.get("ioc",""),
+                                   f"{r.get('abuse_confidence',0)}% abuse confidence",
+                                   f"{r.get('total_reports',0)} reports, {r.get('country','?')}")
+    for r in parsed.get("whois_results",[]):
         age = r.get("age_days"); new = r.get("newly_registered",False)
-        enrich_rows += _enrich_row("WHOIS", r.get("domain",""), f"{age} days old" if age else "unknown", "Newly registered" if new else "")
-    for r in nvd_results:
-        enrich_rows += _enrich_row("NVD", r.get("ioc",""), f"CVSS {r.get('cvss_score',0)}", r.get("severity","?").capitalize())
+        enrich_rows += _enrich_row("WHOIS", r.get("domain",""),
+                                   f"{age} days old" if age else "Unknown age",
+                                   "Newly registered" if new else "Established")
+    for r in [x for x in parsed.get("nvd_results",[]) if not x.get("skipped")]:
+        enrich_rows += _enrich_row("NVD", r.get("ioc",""),
+                                   f"CVSS {r.get('cvss_score',0)} / {r.get('severity','?').capitalize()}", "")
+
+    enrich_section = (f"<table><thead><tr><th>Source</th><th>Indicator</th><th>Result</th><th>Notes</th></tr></thead>"
+                      f"<tbody>{enrich_rows}</tbody></table>") if enrich_rows else "<p class='none'>No enrichment results.</p>"
 
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <style>
-  * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+* {{ margin:0; padding:0; box-sizing:border-box; }}
 
-  body {{
-    font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
-    color: #1a1a2e;
-    font-size: 13px;
-    line-height: 1.6;
-  }}
+body {{
+  font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  color: #111827;
+  font-size: 12.5px;
+  line-height: 1.65;
+  background: #fff;
+}}
 
-  /* ── Cover page ── */
-  .cover {{
-    background: #0d1b2e;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 80px 70px;
-    position: relative;
-    overflow: hidden;
-    page-break-after: always;
-  }}
-  .cover-circle-tl {{
-    position: absolute; top: -60px; left: -60px;
-    width: 280px; height: 280px;
-    border-radius: 50%;
-    background: #1e4080;
-    opacity: 0.7;
-  }}
-  .cover-circle-br {{
-    position: absolute; bottom: -80px; right: -80px;
-    width: 340px; height: 340px;
-    border-radius: 50%;
-    background: #1e4080;
-    opacity: 0.5;
-  }}
-  .cover-line {{
-    border: none;
-    border-top: 1px solid #2a4a70;
-    margin: 32px 0;
-  }}
-  .cover-title {{
-    font-size: 48px;
-    font-weight: 800;
-    color: #ffffff;
-    letter-spacing: -1px;
-    position: relative;
-    z-index: 1;
-  }}
-  .cover-subtitle {{
-    font-size: 20px;
-    color: #90afd4;
-    margin-top: 10px;
-    font-weight: 400;
-    position: relative;
-    z-index: 1;
-  }}
-  .cover-meta {{
-    font-size: 13px;
-    color: #5a7a9a;
-    position: relative;
-    z-index: 1;
-    line-height: 2;
-  }}
-  .cover-score-box {{
-    display: inline-block;
-    background: {score_bg};
-    border: 2px solid {score_color};
-    border-radius: 12px;
-    padding: 16px 28px;
-    margin-top: 24px;
-    position: relative;
-    z-index: 1;
-  }}
-  .cover-score-label {{ font-size: 11px; color: #5a7a9a; text-transform: uppercase; letter-spacing: 1.5px; }}
-  .cover-score-num {{ font-size: 52px; font-weight: 900; color: {score_color}; line-height: 1; }}
-  .cover-score-level {{ font-size: 18px; font-weight: 700; color: {score_color}; margin-top: 4px; }}
+/* ── Cover ── */
+.cover {{
+  background: #0d1b2e;
+  width: 100%;
+  min-height: 100vh;
+  padding: 70px 64px;
+  position: relative;
+  overflow: hidden;
+  page-break-after: always;
+}}
+.circle {{
+  position: absolute;
+  border-radius: 50%;
+  background: #1e3f70;
+}}
+.circle-tl {{ width:260px; height:260px; top:-70px; left:-70px; opacity:0.75; }}
+.circle-br {{ width:340px; height:340px; bottom:-90px; right:-90px; opacity:0.5; }}
 
-  /* ── Content pages ── */
-  .page {{
-    padding: 56px 70px;
-    page-break-before: always;
-  }}
-  .page-header {{
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #e5e7eb;
-    padding-bottom: 14px;
-    margin-bottom: 36px;
-  }}
-  .page-header-brand {{
-    font-size: 13px;
-    font-weight: 700;
-    color: #3b82f6;
-    letter-spacing: 0.5px;
-  }}
-  .page-header-date {{
-    font-size: 11px;
-    color: #9ca3af;
-  }}
+.cover-inner {{ position:relative; z-index:2; }}
 
-  /* ── Section ── */
-  .section-title {{
-    font-size: 11px;
-    font-weight: 700;
-    color: #9ca3af;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    margin: 32px 0 12px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #f3f4f6;
-  }}
+.cover-divider {{
+  border: none;
+  border-top: 1px solid #1e3a5f;
+  margin: 28px 0;
+}}
+.cover-title {{
+  font-size: 52px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -1.5px;
+  line-height: 1;
+}}
+.cover-sub {{
+  font-size: 17px;
+  color: #7aadcf;
+  margin-top: 8px;
+  font-weight: 400;
+}}
+.cover-meta {{
+  font-size: 13px;
+  color: #4a7a9b;
+  line-height: 2.2;
+  margin-top: 6px;
+}}
+.cover-meta span {{ color: #8ab4cc; }}
 
-  /* ── Summary box ── */
-  .summary-box {{
-    background: #eff6ff;
-    border-left: 4px solid #3b82f6;
-    border-radius: 0 8px 8px 0;
-    padding: 16px 20px;
-    margin-bottom: 8px;
-    font-size: 14px;
-    color: #1e3a5f;
-    line-height: 1.7;
-  }}
+.score-pill {{
+  display: inline-flex;
+  align-items: center;
+  gap: 20px;
+  background: rgba(255,255,255,0.05);
+  border: 1.5px solid {score_color};
+  border-radius: 14px;
+  padding: 18px 28px;
+  margin-top: 32px;
+}}
+.score-num {{
+  font-size: 56px;
+  font-weight: 900;
+  color: {score_color};
+  line-height: 1;
+  letter-spacing: -2px;
+}}
+.score-denom {{ font-size: 22px; color: #1e3a5f; font-weight: 400; }}
+.score-meta {{ display:flex; flex-direction:column; gap:4px; }}
+.score-label {{ font-size: 10px; color: #4a7a9b; text-transform: uppercase; letter-spacing: 1.5px; }}
+.score-level {{ font-size: 20px; font-weight: 800; color: {score_color}; }}
 
-  /* ── Callout boxes ── */
-  .callout {{
-    border-radius: 8px;
-    padding: 14px 18px;
-    margin: 8px 0;
-    font-size: 13px;
-  }}
-  .callout-warn {{
-    background: #fff7ed;
-    border-left: 4px solid #f97316;
-    color: #7c2d12;
-  }}
-  .callout-note {{
-    background: #f8fafc;
-    border-left: 4px solid #94a3b8;
-    color: #475569;
-  }}
+/* ── Content page ── */
+.page {{
+  padding: 50px 64px 60px;
+  page-break-before: always;
+}}
 
-  /* ── Tables ── */
-  table {{
-    width: 100%;
-    border-collapse: collapse;
-    margin: 8px 0;
-    font-size: 12px;
-  }}
-  th {{
-    background: #f8fafc;
-    color: #6b7280;
-    font-weight: 600;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    padding: 10px 14px;
-    text-align: left;
-    border-bottom: 2px solid #e5e7eb;
-  }}
-  td {{
-    padding: 10px 14px;
-    border-bottom: 1px solid #f3f4f6;
-    color: #374151;
-    vertical-align: top;
-  }}
-  tr:last-child td {{ border-bottom: none; }}
-  tr:hover td {{ background: #f9fafb; }}
+.page-top {{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f3f4f6;
+}}
+.page-brand {{ font-size:13px; font-weight:800; color:#2563eb; letter-spacing:0.3px; }}
+.page-date  {{ font-size:11px; color:#9ca3af; }}
 
-  /* ── Lists ── */
-  ul {{ padding-left: 20px; margin: 6px 0; }}
-  li {{ margin: 6px 0; color: #374151; }}
-  li::marker {{ color: #3b82f6; }}
+/* ── Section headers ── */
+h2 {{
+  font-size: 13px;
+  font-weight: 700;
+  color: #2563eb;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin: 28px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #e0e7ff;
+}}
 
-  /* ── Mono ── */
-  .mono {{
-    font-family: 'SF Mono', 'Cascadia Code', 'Courier New', monospace;
-    font-size: 11px;
-    color: #374151;
-  }}
+/* ── Summary callout ── */
+.summary {{
+  background: #eff6ff;
+  border-left: 4px solid #2563eb;
+  padding: 14px 18px;
+  border-radius: 0 8px 8px 0;
+  font-size: 13.5px;
+  color: #1e3a5f;
+  line-height: 1.75;
+}}
 
-  /* ── Badges ── */
-  .badge {{
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.3px;
-  }}
-  .badge-red    {{ background: #fee2e2; color: #dc2626; }}
-  .badge-yellow {{ background: #fef9c3; color: #a16207; }}
-  .badge-gray   {{ background: #f3f4f6; color: #6b7280; }}
-  .badge-green  {{ background: #dcfce7; color: #15803d; }}
+/* ── Orange callout ── */
+.callout-warn {{
+  background: #fff7ed;
+  border-left: 4px solid #f97316;
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  font-size: 12px;
+  color: #7c2d12;
+  margin: 8px 0;
+  line-height: 1.6;
+}}
+.callout-note {{
+  background: #f8fafc;
+  border-left: 4px solid #94a3b8;
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  font-size: 12px;
+  color: #475569;
+  margin: 8px 0;
+}}
 
-  /* ── Footer ── */
-  .footer {{
-    margin-top: 48px;
-    padding-top: 16px;
-    border-top: 1px solid #e5e7eb;
-    font-size: 10px;
-    color: #9ca3af;
-    text-align: center;
-    line-height: 1.8;
-  }}
+/* ── Score signals ── */
+.signal-row {{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 14px;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 12.5px;
+}}
+.signal-row:last-child {{ border-bottom: none; }}
+.signal-name {{ color: #374151; }}
+.signal-pts  {{ font-weight: 800; font-size: 14px; }}
+
+/* ── IOC blocks ── */
+.ioc-group {{ margin: 6px 0 10px; }}
+.ioc-label {{
+  font-size: 10px;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}}
+.ioc-item {{
+  font-family: 'SF Mono','Cascadia Code','Courier New',monospace;
+  font-size: 11.5px;
+  color: #1e3a5f;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  padding: 5px 10px;
+  margin: 3px 0;
+}}
+
+/* ── Tables ── */
+table {{
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  margin: 6px 0 14px;
+}}
+th {{
+  background: #f1f5f9;
+  color: #475569;
+  font-weight: 700;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 9px 12px;
+  text-align: left;
+  border-bottom: 2px solid #e2e8f0;
+}}
+td {{
+  padding: 9px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #374151;
+  vertical-align: top;
+}}
+tr:last-child td {{ border-bottom: none; }}
+.td-id   {{ font-family:monospace; font-weight:800; color:#2563eb; font-size:12px; white-space:nowrap; }}
+.td-name {{ font-weight:600; }}
+.td-desc {{ color:#6b7280; font-size:11px; }}
+.td-note {{ color:#9ca3af; font-size:11px; }}
+.td-source {{ font-weight:700; color:#374151; white-space:nowrap; }}
+.td-ioc  {{ font-family:monospace; font-size:10.5px; color:#374151; word-break:break-all; }}
+
+/* ── Lists ── */
+ul {{ padding-left: 18px; margin: 6px 0; }}
+li {{ margin: 5px 0; color: #374151; font-size: 12.5px; }}
+li::marker {{ color: #2563eb; }}
+
+/* ── Misc ── */
+.none {{ color: #9ca3af; font-style: italic; font-size: 12px; margin: 6px 0; }}
+
+/* ── Footer ── */
+.footer {{
+  margin-top: 40px;
+  padding-top: 14px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 10px;
+  color: #9ca3af;
+  text-align: center;
+  line-height: 1.9;
+}}
 </style>
 </head>
 <body>
 
-<!-- ── Cover page ── -->
+<!-- ══ COVER ══ -->
 <div class="cover">
-  <div class="cover-circle-tl"></div>
-  <div class="cover-circle-br"></div>
-
-  <div style="position:relative; z-index:1;">
+  <div class="circle circle-tl"></div>
+  <div class="circle circle-br"></div>
+  <div class="cover-inner">
     <div class="cover-title">ThreatScope</div>
-    <div class="cover-subtitle">Security Investigation Report</div>
-    <hr class="cover-line">
+    <div class="cover-sub">Security Investigation Report</div>
+    <hr class="cover-divider">
     <div class="cover-meta">
-      Subject: {subject}<br>
-      Generated: {date}<br>
-      Classification: Confidential
+      Subject &nbsp;<span>{subject}</span><br>
+      Generated &nbsp;<span>{date}</span><br>
+      Classification &nbsp;<span>Confidential</span>
     </div>
-    <div class="cover-score-box">
-      <div class="cover-score-label">Overall Risk Score</div>
-      <div class="cover-score-num">{s}<span style="font-size:24px; font-weight:400; color:#2a4a70;">/100</span></div>
-      <div class="cover-score-level">{level} Risk</div>
+    <div class="score-pill">
+      <div>
+        <div class="score-num">{s}<span class="score-denom">/100</span></div>
+      </div>
+      <div class="score-meta">
+        <div class="score-label">Overall Risk Score</div>
+        <div class="score-level">{level} Risk</div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- ── Page 2: Executive Summary + Score ── -->
+<!-- ══ OVERVIEW PAGE ══ -->
 <div class="page">
-  <div class="page-header">
-    <span class="page-header-brand">ThreatScope</span>
-    <span class="page-header-date">{date}</span>
+  <div class="page-top">
+    <span class="page-brand">ThreatScope</span>
+    <span class="page-date">{date}</span>
   </div>
 
-  <div class="section-title">Executive Summary</div>
-  <div class="summary-box">{report.get("executive_summary","No summary generated.")}</div>
+  <!-- Summary -->
+  <h2>Executive Summary</h2>
+  <div class="summary">{report.get("executive_summary","No summary generated.")}</div>
 
-  <div class="section-title">Risk Score Breakdown</div>
-  <table>
-    <thead><tr><th>Signal</th><th>Points</th></tr></thead>
-    <tbody>{breakdown_rows if breakdown_rows else "<tr><td colspan='2' style='color:#999;'>No signals triggered.</td></tr>"}</tbody>
-  </table>
+  <!-- Two-column: Score + IOCs -->
+  <div style="display:flex; gap:40px; margin-top:4px; align-items:flex-start;">
 
-  <div class="section-title">Technical Findings</div>
-  {"<ul>" + findings_html + "</ul>" if findings_html else '<p style="color:#999;">No findings.</p>'}
+    <div style="flex:1;">
+      <h2>Risk Score Breakdown</h2>
+      <div style="border:1px solid #f1f5f9; border-radius:8px; overflow:hidden;">
+        {breakdown_html}
+      </div>
 
-  <div class="footer">
-    ThreatScope — Defensive security education only. All findings require human review before taking action.
-  </div>
-</div>
+      <h2>MITRE ATT&CK Techniques</h2>
+      <table>
+        <thead><tr><th>ID</th><th>Technique</th><th>Confidence</th><th>Description</th></tr></thead>
+        <tbody>{mitre_html}</tbody>
+      </table>
+    </div>
 
-<!-- ── Page 3: IOCs + Threat Intel ── -->
-<div class="page">
-  <div class="page-header">
-    <span class="page-header-brand">ThreatScope</span>
-    <span class="page-header-date">{date}</span>
-  </div>
+    <div style="flex:1;">
+      <h2>Indicators of Compromise</h2>
+      {ioc_html}
 
-  <div class="section-title">Indicators of Compromise</div>
-  {"<table><thead><tr><th>Type</th><th>Indicator (Defanged)</th></tr></thead><tbody>" + all_ioc_rows + "</tbody></table>" if all_ioc_rows else '<p style="color:#999;">No IOCs extracted.</p>'}
+      <h2>Threat Intelligence</h2>
+      {enrich_section}
+    </div>
 
-  <div class="section-title">Threat Intelligence</div>
-  {"<table><thead><tr><th>Source</th><th>Indicator</th><th>Result</th><th>Notes</th></tr></thead><tbody>" + enrich_rows + "</tbody></table>" if enrich_rows else '<p style="color:#999;">No enrichment results (offline mode or missing API keys).</p>'}
-
-  <div class="footer">
-    ThreatScope — Defensive security education only. All findings require human review before taking action.
-  </div>
-</div>
-
-<!-- ── Page 4: MITRE + Actions + Notes ── -->
-<div class="page">
-  <div class="page-header">
-    <span class="page-header-brand">ThreatScope</span>
-    <span class="page-header-date">{date}</span>
   </div>
 
-  <div class="section-title">MITRE ATT&CK Techniques</div>
-  <table>
-    <thead><tr><th>ID</th><th>Technique</th><th>Confidence</th><th>Description</th></tr></thead>
-    <tbody>{mitre_rows}</tbody>
-  </table>
+  <!-- Findings + Actions -->
+  <h2>Technical Findings</h2>
+  {"<ul>" + findings_html + "</ul>" if findings_html else "<p class='none'>No findings generated.</p>"}
 
-  <div class="section-title">Recommended Actions</div>
-  {"<ul>" + actions_html + "</ul>" if actions_html else '<p style="color:#999;">No actions generated.</p>'}
+  <h2>Recommended Actions</h2>
+  {"<ul>" + actions_html + "</ul>" if actions_html else "<p class='none'>No actions generated.</p>"}
 
-  {"<div class='section-title'>Analyst Notes</div><div class='callout callout-note'>" + report.get('analyst_notes','') + "</div>" if report.get('analyst_notes') else ""}
+  {("<h2>Analyst Notes</h2><div class='callout-note'>" + report.get('analyst_notes','') + "</div>") if report.get('analyst_notes') else ""}
 
-  <div class="callout callout-warn" style="margin-top:32px;">
-    All findings generated by ThreatScope are investigative aids and require human review before any action is taken.
-    Risk scores, MITRE mappings, and AI-generated summaries are not authoritative determinations.
+  <div class="callout-warn" style="margin-top:24px;">
+    All ThreatScope findings are investigative aids. Risk scores, MITRE mappings, and AI-generated summaries
+    require human review before any action is taken. Do not act solely on this report.
   </div>
 
   <div class="footer">
-    ThreatScope — Local-first AI security triage tool.<br>
+    ThreatScope &nbsp;|&nbsp; Local-first AI security triage &nbsp;|&nbsp; {date}<br>
     Not affiliated with MITRE, VirusTotal, AbuseIPDB, or the National Vulnerability Database.<br>
-    Defensive security education only.
+    Defensive security education only — validate all findings manually.
   </div>
 </div>
 
