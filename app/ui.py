@@ -975,292 +975,266 @@ def _build_pdf_html(parsed: dict, score_result: dict, techniques: list, report: 
 
 body {{
   font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
-  color: #111827;
-  font-size: 12.5px;
+  color: #1a1a2e;
+  font-size: 13px;
   line-height: 1.65;
   background: #fff;
 }}
 
-/* ── Cover ── */
+/* ══ COVER ══ */
 .cover {{
-  background: #0d1b2e;
+  background: #0d1729;
   width: 100%;
-  min-height: 100vh;
-  padding: 70px 64px;
+  height: 100vh;
   position: relative;
   overflow: hidden;
   page-break-after: always;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
 }}
-.circle {{
+
+/* Circles exactly matching the guide */
+.circle-tl {{
   position: absolute;
+  width: 320px; height: 320px;
   border-radius: 50%;
-  background: #1e3f70;
+  background: #3b6fff;
+  top: -100px; left: -100px;
 }}
-.circle-tl {{ width:260px; height:260px; top:-70px; left:-70px; opacity:0.75; }}
-.circle-br {{ width:340px; height:340px; bottom:-90px; right:-90px; opacity:0.5; }}
-
-.cover-inner {{ position:relative; z-index:2; }}
-
-.cover-divider {{
-  border: none;
-  border-top: 1px solid #1e3a5f;
-  margin: 28px 0;
+.circle-br {{
+  position: absolute;
+  width: 260px; height: 260px;
+  border-radius: 50%;
+  background: #3b6fff;
+  bottom: -80px; right: -80px;
+  opacity: 0.85;
 }}
+
+/* Thin horizontal line near top like the guide */
+.cover-line {{
+  position: absolute;
+  top: 200px; left: 120px; right: 40px;
+  height: 1px;
+  background: #1e3a5f;
+}}
+
+.cover-inner {{
+  position: relative;
+  z-index: 2;
+  padding: 0 60px;
+  max-width: 600px;
+}}
+
 .cover-title {{
   font-size: 52px;
-  font-weight: 900;
-  color: #fff;
-  letter-spacing: -1.5px;
-  line-height: 1;
+  font-weight: 300;
+  color: #ffffff;
+  letter-spacing: 0;
+  margin-bottom: 10px;
 }}
 .cover-sub {{
-  font-size: 17px;
+  font-size: 22px;
   color: #7aadcf;
-  margin-top: 8px;
   font-weight: 400;
+  margin-bottom: 10px;
+}}
+.cover-tagline {{
+  font-size: 14px;
+  color: #6a8fad;
+  margin-bottom: 28px;
 }}
 .cover-meta {{
-  font-size: 13px;
-  color: #4a7a9b;
-  line-height: 2.2;
-  margin-top: 6px;
+  font-size: 12px;
+  color: #4a6a8a;
+  line-height: 2;
 }}
-.cover-meta span {{ color: #8ab4cc; }}
-
-.score-pill {{
-  display: inline-flex;
-  align-items: center;
-  gap: 20px;
-  background: rgba(255,255,255,0.05);
-  border: 1.5px solid {score_color};
-  border-radius: 14px;
-  padding: 18px 28px;
+.cover-score {{
   margin-top: 32px;
+  display: inline-block;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid {score_color}55;
+  border-radius: 10px;
+  padding: 14px 32px;
 }}
-.score-num {{
-  font-size: 56px;
-  font-weight: 900;
-  color: {score_color};
-  line-height: 1;
-  letter-spacing: -2px;
-}}
-.score-denom {{ font-size: 22px; color: #1e3a5f; font-weight: 400; }}
-.score-meta {{ display:flex; flex-direction:column; gap:4px; }}
-.score-label {{ font-size: 10px; color: #4a7a9b; text-transform: uppercase; letter-spacing: 1.5px; }}
-.score-level {{ font-size: 20px; font-weight: 800; color: {score_color}; }}
+.cover-score-label {{ font-size:10px; color:#4a7a9b; text-transform:uppercase; letter-spacing:1.5px; }}
+.cover-score-num   {{ font-size:48px; font-weight:700; color:{score_color}; line-height:1.1; }}
+.cover-score-level {{ font-size:16px; color:{score_color}; font-weight:600; margin-top:2px; }}
 
-/* ── Content page ── */
+/* ══ CONTENT PAGES ══ */
 .page {{
-  padding: 50px 64px 60px;
+  padding: 44px 56px 56px;
+  background: #fff;
   page-break-before: always;
 }}
 
-.page-top {{
+/* Small header exactly like the guide */
+.page-hdr {{
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 32px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #f3f4f6;
+  font-size: 11px;
+  color: #9ca3af;
+  margin-bottom: 28px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e5e7eb;
 }}
-.page-brand {{ font-size:13px; font-weight:800; color:#2563eb; letter-spacing:0.3px; }}
-.page-date  {{ font-size:11px; color:#9ca3af; }}
+.page-hdr-brand {{ color: #6b7280; font-weight: 500; }}
+.page-hdr-page  {{ color: #9ca3af; }}
 
-/* ── Section headers ── */
+/* Blue section headers — exactly like the guide */
 h2 {{
-  font-size: 13px;
+  font-size: 18px;
   font-weight: 700;
   color: #2563eb;
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-  margin: 28px 0 10px;
-  padding-bottom: 6px;
-  border-bottom: 2px solid #e0e7ff;
+  margin: 26px 0 10px;
+  padding-bottom: 0;
 }}
 
-/* ── Summary callout ── */
-.summary {{
-  background: #eff6ff;
-  border-left: 4px solid #2563eb;
-  padding: 14px 18px;
-  border-radius: 0 8px 8px 0;
-  font-size: 13.5px;
-  color: #1e3a5f;
-  line-height: 1.75;
-}}
+/* Body text */
+p {{ color: #374151; margin: 6px 0; }}
 
-/* ── Orange callout ── */
+/* Orange callout exactly like the guide */
 .callout-warn {{
   background: #fff7ed;
+  border: 1px solid #fed7aa;
   border-left: 4px solid #f97316;
+  border-radius: 4px;
   padding: 12px 16px;
-  border-radius: 0 8px 8px 0;
-  font-size: 12px;
+  margin: 10px 0;
+  font-size: 12.5px;
   color: #7c2d12;
-  margin: 8px 0;
   line-height: 1.6;
 }}
 .callout-note {{
-  background: #f8fafc;
-  border-left: 4px solid #94a3b8;
+  background: #f0f9ff;
+  border-left: 4px solid #2563eb;
   padding: 12px 16px;
-  border-radius: 0 8px 8px 0;
-  font-size: 12px;
-  color: #475569;
-  margin: 8px 0;
+  border-radius: 0 4px 4px 0;
+  font-size: 12.5px;
+  color: #1e3a5f;
+  line-height: 1.7;
 }}
 
-/* ── Score signals ── */
+/* Score signals */
 .signal-row {{
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 8px 14px;
+  padding: 7px 12px;
   border-bottom: 1px solid #f3f4f6;
-  font-size: 12.5px;
+  font-size: 12px;
 }}
 .signal-row:last-child {{ border-bottom: none; }}
-.signal-name {{ color: #374151; }}
-.signal-pts  {{ font-weight: 800; font-size: 14px; }}
+.signal-pts {{ font-weight: 700; color: {score_color}; }}
 
-/* ── IOC blocks ── */
-.ioc-group {{ margin: 6px 0 10px; }}
+/* IOC items */
+.ioc-group {{ margin: 4px 0 12px; }}
 .ioc-label {{
-  font-size: 10px;
-  font-weight: 700;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 4px;
+  font-size: 10px; font-weight: 700; color: #6b7280;
+  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px;
 }}
 .ioc-item {{
-  font-family: 'SF Mono','Cascadia Code','Courier New',monospace;
-  font-size: 11.5px;
-  color: #1e3a5f;
-  background: #f8fafc;
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
-  padding: 5px 10px;
-  margin: 3px 0;
+  font-family: 'Courier New', monospace;
+  font-size: 11px; color: #1e3a5f;
+  background: #f8fafc; border: 1px solid #e5e7eb;
+  border-radius: 3px; padding: 4px 8px; margin: 2px 0;
+  word-break: break-all;
 }}
 
-/* ── Tables ── */
-table {{
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-  margin: 6px 0 14px;
-}}
+/* Tables */
+table {{ width:100%; border-collapse:collapse; font-size:12px; margin:6px 0 16px; }}
 th {{
-  background: #f1f5f9;
-  color: #475569;
-  font-weight: 700;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  padding: 9px 12px;
-  text-align: left;
-  border-bottom: 2px solid #e2e8f0;
+  background: #f8fafc; color: #6b7280; font-weight: 600;
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px;
+  padding: 8px 12px; text-align: left; border-bottom: 2px solid #e5e7eb;
 }}
-td {{
-  padding: 9px 12px;
-  border-bottom: 1px solid #f1f5f9;
-  color: #374151;
-  vertical-align: top;
-}}
+td {{ padding: 8px 12px; border-bottom: 1px solid #f3f4f6; color: #374151; vertical-align: top; }}
 tr:last-child td {{ border-bottom: none; }}
-.td-id   {{ font-family:monospace; font-weight:800; color:#2563eb; font-size:12px; white-space:nowrap; }}
-.td-name {{ font-weight:600; }}
+.td-id {{ font-family:monospace; font-weight:800; color:#2563eb; white-space:nowrap; }}
 .td-desc {{ color:#6b7280; font-size:11px; }}
 .td-note {{ color:#9ca3af; font-size:11px; }}
-.td-source {{ font-weight:700; color:#374151; white-space:nowrap; }}
-.td-ioc  {{ font-family:monospace; font-size:10.5px; color:#374151; word-break:break-all; }}
+.td-ioc {{ font-family:monospace; font-size:10.5px; word-break:break-all; }}
 
-/* ── Lists ── */
+/* Lists */
 ul {{ padding-left: 18px; margin: 6px 0; }}
-li {{ margin: 5px 0; color: #374151; font-size: 12.5px; }}
+li {{ margin: 5px 0; color: #374151; }}
 li::marker {{ color: #2563eb; }}
 
-/* ── Misc ── */
-.none {{ color: #9ca3af; font-style: italic; font-size: 12px; margin: 6px 0; }}
+.none {{ color: #9ca3af; font-style: italic; font-size: 12px; }}
 
-/* ── Footer ── */
+/* Footer exactly like the guide */
 .footer {{
   margin-top: 40px;
-  padding-top: 14px;
+  padding-top: 12px;
   border-top: 1px solid #e5e7eb;
   font-size: 10px;
   color: #9ca3af;
   text-align: center;
-  line-height: 1.9;
 }}
 </style>
 </head>
 <body>
 
-<!-- ══ COVER ══ -->
+<!-- ══ COVER — matches guide exactly ══ -->
 <div class="cover">
-  <div class="circle circle-tl"></div>
-  <div class="circle circle-br"></div>
+  <div class="circle-tl"></div>
+  <div class="circle-br"></div>
+  <div class="cover-line"></div>
+
   <div class="cover-inner">
     <div class="cover-title">ThreatScope</div>
     <div class="cover-sub">Security Investigation Report</div>
-    <hr class="cover-divider">
+    <div class="cover-tagline">Local-first phishing and alert triage</div>
     <div class="cover-meta">
-      Subject &nbsp;<span>{subject}</span><br>
-      Generated &nbsp;<span>{date}</span><br>
-      Classification &nbsp;<span>Confidential</span>
+      {subject}<br>
+      {date}
     </div>
-    <div class="score-pill">
-      <div>
-        <div class="score-num">{s}<span class="score-denom">/100</span></div>
-      </div>
-      <div class="score-meta">
-        <div class="score-label">Overall Risk Score</div>
-        <div class="score-level">{level} Risk</div>
-      </div>
+    <div class="cover-score">
+      <div class="cover-score-label">Risk Score</div>
+      <div class="cover-score-num">{s}<span style="font-size:22px; color:#1e3a5f; font-weight:300;">/100</span></div>
+      <div class="cover-score-level">{level} Risk</div>
     </div>
   </div>
 </div>
 
-<!-- ══ OVERVIEW PAGE ══ -->
+<!-- ══ REPORT PAGE — overview ══ -->
 <div class="page">
-  <div class="page-top">
-    <span class="page-brand">ThreatScope</span>
-    <span class="page-date">{date}</span>
+  <div class="page-hdr">
+    <span class="page-hdr-brand">ThreatScope Security Report</span>
+    <span class="page-hdr-page">{date}</span>
   </div>
 
-  <!-- Summary -->
   <h2>Executive Summary</h2>
-  <div class="summary">{report.get("executive_summary","No summary generated.")}</div>
+  <div class="callout-note">{report.get("executive_summary","No summary generated.")}</div>
 
-  <!-- Two-column: Score + IOCs -->
-  <div style="display:flex; gap:40px; margin-top:4px; align-items:flex-start;">
-
+  <div style="display:flex; gap:36px; align-items:flex-start; margin-top:4px;">
     <div style="flex:1;">
+
       <h2>Risk Score Breakdown</h2>
-      <div style="border:1px solid #f1f5f9; border-radius:8px; overflow:hidden;">
+      <div style="border:1px solid #f3f4f6; border-radius:6px; overflow:hidden; margin-bottom:8px;">
         {breakdown_html}
       </div>
 
-      <h2>MITRE ATT&CK Techniques</h2>
+      <h2>Indicators of Compromise</h2>
+      {ioc_html if ioc_html else "<p class='none'>No indicators extracted.</p>"}
+
+    </div>
+    <div style="flex:1;">
+
+      <h2>MITRE ATT&CK</h2>
       <table>
-        <thead><tr><th>ID</th><th>Technique</th><th>Confidence</th><th>Description</th></tr></thead>
+        <thead><tr><th>ID</th><th>Technique</th><th>Conf.</th><th>Description</th></tr></thead>
         <tbody>{mitre_html}</tbody>
       </table>
-    </div>
-
-    <div style="flex:1;">
-      <h2>Indicators of Compromise</h2>
-      {ioc_html}
 
       <h2>Threat Intelligence</h2>
       {enrich_section}
-    </div>
 
+    </div>
   </div>
 
-  <!-- Findings + Actions -->
   <h2>Technical Findings</h2>
   {"<ul>" + findings_html + "</ul>" if findings_html else "<p class='none'>No findings generated.</p>"}
 
@@ -1269,15 +1243,13 @@ li::marker {{ color: #2563eb; }}
 
   {("<h2>Analyst Notes</h2><div class='callout-note'>" + report.get('analyst_notes','') + "</div>") if report.get('analyst_notes') else ""}
 
-  <div class="callout-warn" style="margin-top:24px;">
-    All ThreatScope findings are investigative aids. Risk scores, MITRE mappings, and AI-generated summaries
-    require human review before any action is taken. Do not act solely on this report.
+  <div class="callout-warn" style="margin-top:20px;">
+    All findings are investigative aids and require human review before action is taken.
+    Risk scores, MITRE mappings, and AI-generated content are not authoritative determinations.
   </div>
 
   <div class="footer">
-    ThreatScope &nbsp;|&nbsp; Local-first AI security triage &nbsp;|&nbsp; {date}<br>
-    Not affiliated with MITRE, VirusTotal, AbuseIPDB, or the National Vulnerability Database.<br>
-    Defensive security education only — validate all findings manually.
+    ThreatScope &nbsp;|&nbsp; Defensive security education only &nbsp;|&nbsp; Validate all findings manually
   </div>
 </div>
 
