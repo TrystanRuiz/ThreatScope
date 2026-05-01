@@ -885,11 +885,7 @@ def _save_report(parsed: dict, score_result: dict, techniques: list, report: dic
     filename = REPORTS_DIR / f"{ts}_{subject}.md"
     filename.write_text(md_content)
 
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        st.success(f"Report saved: `{filename.name}`")
-    with col2:
-        _pdf_download_button(parsed, score_result, techniques, report, f"{ts}_{subject}.pdf")
+    st.success(f"Report saved: `{filename.name}`")
 
 def _build_pdf_html(parsed: dict, score_result: dict, techniques: list, report: dict) -> str:  # noqa: C901
     s       = score_result["score"]
@@ -1429,6 +1425,25 @@ elif page == "Email Analyzer":
         info.empty()
         bar.empty()
 
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        subject = parsed.get("subject", "alert")[:40].replace("/", "-")
+        pdf_filename = f"{ts}_{subject}.pdf"
+
+        st.markdown("---")
+
+        # PDF download at the top
+        col_pdf, col_desc = st.columns([1, 4])
+        with col_pdf:
+            _pdf_download_button(parsed, score_result, techniques, report, pdf_filename)
+        with col_desc:
+            st.markdown(
+                '<div style="font-size:13px; color:#6b7280; padding-top:6px;">'
+                'Download a formatted 2-page PDF of this report — cover page with risk score, '
+                'full findings, IOCs, MITRE techniques, and recommended actions.'
+                '</div>',
+                unsafe_allow_html=True,
+            )
+
         st.markdown("---")
         _render_score(score_result)
         st.markdown("---")
@@ -1519,6 +1534,22 @@ elif page == "Alert Triage":
         bar.progress(100, text="Triage complete.")
         info.empty()
         bar.empty()
+
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        pdf_filename = f"{ts}_alert_triage.pdf"
+
+        st.markdown("---")
+        col_pdf, col_desc = st.columns([1, 4])
+        with col_pdf:
+            _pdf_download_button(parsed, score_result, techniques, report, pdf_filename)
+        with col_desc:
+            st.markdown(
+                '<div style="font-size:13px; color:#6b7280; padding-top:6px;">'
+                'Download a formatted 2-page PDF of this triage report — cover page with risk score, '
+                'full findings, IOCs, MITRE techniques, and recommended actions.'
+                '</div>',
+                unsafe_allow_html=True,
+            )
 
         st.markdown("---")
         _render_score(score_result)
