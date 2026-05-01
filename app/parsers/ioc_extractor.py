@@ -23,9 +23,13 @@ def extract_domains(text: str) -> list[dict]:
     domains = set(_DOMAIN.findall(text)) - url_domains
     return [{"value": d, "defanged": defang_domain(d)} for d in domains]
 
+def _valid_ip(ip: str) -> bool:
+    parts = ip.split(".")
+    return all(0 <= int(p) <= 255 for p in parts)
+
 def extract_ipv4(text: str) -> list[dict]:
     private = re.compile(r"^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.)")
-    ips = [ip for ip in set(_IP.findall(text)) if not private.match(ip)]
+    ips = [ip for ip in set(_IP.findall(text)) if _valid_ip(ip) and not private.match(ip)]
     return [{"value": ip, "defanged": defang_ip(ip)} for ip in ips]
 
 def extract_hashes(text: str) -> list[dict]:

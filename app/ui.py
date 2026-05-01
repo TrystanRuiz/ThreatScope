@@ -1,6 +1,7 @@
 import asyncio
 import sys
 from datetime import datetime
+from html import escape
 from pathlib import Path
 
 import streamlit as st
@@ -262,6 +263,9 @@ LEVEL_ADVICE = {
 def _cls(level): return {"Critical":"critical","High":"high","Medium":"medium","Low":"low"}.get(level,"low")
 def _col(s): return "#ff4b4b" if s>=76 else "#ff8c00" if s>=51 else "#ffd700" if s>=26 else "#21c55d"
 def _badge(text, color): return f'<span class="badge b-{color}">{text}</span>'
+def _e(val, default="") -> str:
+    """Escape a value from external/attacker-controlled data before HTML interpolation."""
+    return escape(str(val)) if val is not None else default
 
 
 # ── Core pipeline ─────────────────────────────────────────────────────────────
@@ -435,14 +439,14 @@ def _render_iocs(parsed: dict):
         any_found = True
         for item in items:
             val = item.get("defanged", item.get("value", item)) if isinstance(item, dict) else item
-            st.markdown(f'<div class="ioc-row"><span class="type-tag">{tag}</span>{val}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="ioc-row"><span class="type-tag">{tag}</span>{escape(str(val))}</div>', unsafe_allow_html=True)
 
     attachments = parsed.get("attachments", [])
     if attachments:
         for a in attachments:
             danger = any(a.lower().endswith(ext) for ext in [".exe",".js",".vbs",".bat",".ps1",".hta",".docm",".xlsm",".zip",".rar"])
             warn = ' <span style="color:#ef4444; font-size:12px; font-weight:600;">Dangerous file type</span>' if danger else ""
-            st.markdown(f'<div class="ioc-row"><span class="type-tag">ATTACHMENT</span><span class="{"ioc-danger" if danger else ""}">{a}</span>{warn}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="ioc-row"><span class="type-tag">ATTACHMENT</span><span class="{"ioc-danger" if danger else ""}">{escape(a)}</span>{warn}</div>', unsafe_allow_html=True)
         any_found = True
 
     if not any_found:
@@ -479,7 +483,7 @@ def _render_enrichment(parsed: dict):
         st.markdown(f"""
         <div class="card {cls}">
             <div class="label">VirusTotal</div>
-            <div class="mono" style="color:#9ca3af; margin-bottom:14px; font-size:12px;">{r.get('ioc','')}</div>
+            <div class="mono" style="color:#9ca3af; margin-bottom:14px; font-size:12px;">{_e(r.get('ioc',''))}</div>
             <div class="data-grid">
                 <div class="data-cell">
                     <div class="sub">Flagged by</div>
@@ -511,7 +515,7 @@ def _render_enrichment(parsed: dict):
         st.markdown(f"""
         <div class="card {cls}">
             <div class="label">AbuseIPDB — IP Reputation</div>
-            <div class="mono" style="color:#9ca3af; margin-bottom:14px; font-size:12px;">{r.get('ioc','')}</div>
+            <div class="mono" style="color:#9ca3af; margin-bottom:14px; font-size:12px;">{_e(r.get('ioc',''))}</div>
             <div class="data-grid">
                 <div class="data-cell">
                     <div class="sub">Abuse Confidence</div>
@@ -524,11 +528,11 @@ def _render_enrichment(parsed: dict):
                 </div>
                 <div class="data-cell">
                     <div class="sub">Country</div>
-                    <div class="value">{r.get('country','?')}</div>
+                    <div class="value">{_e(r.get('country','?'))}</div>
                 </div>
                 <div class="data-cell">
                     <div class="sub">ISP</div>
-                    <div class="value" style="font-size:13px;">{r.get('isp','unknown')}</div>
+                    <div class="value" style="font-size:13px;">{_e(r.get('isp','unknown'))}</div>
                 </div>
             </div>
             <div class="verdict" style="color:{col};">{verdict}</div>
@@ -547,7 +551,7 @@ def _render_enrichment(parsed: dict):
         st.markdown(f"""
         <div class="card {cls}">
             <div class="label">WHOIS — Domain Registration</div>
-            <div class="mono" style="color:#9ca3af; margin-bottom:14px; font-size:12px;">{r.get('domain','')}</div>
+            <div class="mono" style="color:#9ca3af; margin-bottom:14px; font-size:12px;">{_e(r.get('domain',''))}</div>
             <div class="data-grid">
                 <div class="data-cell">
                     <div class="sub">Domain Age</div>
@@ -555,15 +559,15 @@ def _render_enrichment(parsed: dict):
                 </div>
                 <div class="data-cell">
                     <div class="sub">Registered On</div>
-                    <div class="value" style="font-size:13px;">{r.get('creation_date','unknown')}</div>
+                    <div class="value" style="font-size:13px;">{_e(r.get('creation_date','unknown'))}</div>
                 </div>
                 <div class="data-cell">
                     <div class="sub">Registrar</div>
-                    <div class="value" style="font-size:13px;">{r.get('registrar','unknown')}</div>
+                    <div class="value" style="font-size:13px;">{_e(r.get('registrar','unknown'))}</div>
                 </div>
                 <div class="data-cell">
                     <div class="sub">Country</div>
-                    <div class="value">{r.get('country','unknown')}</div>
+                    <div class="value">{_e(r.get('country','unknown'))}</div>
                 </div>
             </div>
             <div class="verdict" style="color:{col};">{verdict}</div>
@@ -582,7 +586,7 @@ def _render_enrichment(parsed: dict):
         st.markdown(f"""
         <div class="card {cls}">
             <div class="label">NVD — Known Vulnerability</div>
-            <div class="mono" style="color:#9ca3af; margin-bottom:14px; font-size:12px;">{r.get('ioc','')}</div>
+            <div class="mono" style="color:#9ca3af; margin-bottom:14px; font-size:12px;">{_e(r.get('ioc',''))}</div>
             <div class="data-grid">
                 <div class="data-cell">
                     <div class="sub">CVSS Score (0-10)</div>
@@ -591,7 +595,7 @@ def _render_enrichment(parsed: dict):
                 </div>
                 <div class="data-cell" style="flex:2;">
                     <div class="sub">Description</div>
-                    <div style="font-size:13px; color:#9ca3af; margin-top:4px; line-height:1.6;">{r.get('description','No description available.')}</div>
+                    <div style="font-size:13px; color:#9ca3af; margin-top:4px; line-height:1.6;">{_e(r.get('description','No description available.'))}</div>
                 </div>
             </div>
             <div class="verdict" style="color:{col};">{verdict}</div>
@@ -603,18 +607,18 @@ def _render_enrichment(parsed: dict):
         cls   = "critical" if found else "clean"
         tags  = ", ".join(r.get("tags", [])) or "none"
         col   = "#ef4444" if found else "#22c55e"
-        verdict = f"Found in MalwareBazaar. Classified as {r.get('signature','unknown')}. First seen {r.get('first_seen','?')}." if found else "Not found in MalwareBazaar. The file may be clean or not yet cataloged."
+        verdict = f"Found in MalwareBazaar. Classified as {_e(r.get('signature','unknown'))}. First seen {r.get('first_seen','?')}." if found else "Not found in MalwareBazaar. The file may be clean or not yet cataloged."
         st.markdown(f"""
         <div class="card {cls}">
             <div class="label">MalwareBazaar — File Hash</div>
-            <div class="mono" style="color:#9ca3af; margin-bottom:14px; font-size:12px;">{r.get('ioc','')[:40]}...</div>
+            <div class="mono" style="color:#9ca3af; margin-bottom:14px; font-size:12px;">{_e(r.get('ioc',''))[:40]}...</div>
             <div class="data-grid">
                 <div class="data-cell">
                     <div class="sub">Known Malware</div>
                     <div style="font-size:20px; font-weight:800; color:{col};">{"YES" if found else "NOT FOUND"}</div>
                 </div>
-                {"<div class='data-cell'><div class='sub'>Malware Family</div><div class='value'>" + r.get('signature','?') + "</div></div>" if found else ""}
-                {"<div class='data-cell'><div class='sub'>File Type</div><div class='value'>" + r.get('file_type','?') + "</div></div>" if found else ""}
+                {"<div class='data-cell'><div class='sub'>Malware Family</div><div class='value'>" + _e(r.get('signature','?')) + "</div></div>" if found else ""}
+                {"<div class='data-cell'><div class='sub'>File Type</div><div class='value'>" + _e(r.get('file_type','?')) + "</div></div>" if found else ""}
                 {"<div class='data-cell'><div class='sub'>Tags</div><div class='value' style='font-size:13px;'>" + tags + "</div></div>" if found else ""}
             </div>
             <div class="verdict" style="color:{col};">{verdict}</div>
@@ -624,7 +628,7 @@ def _render_enrichment(parsed: dict):
     if skipped:
         with st.expander(f"{len(skipped)} lookup(s) skipped"):
             for r in skipped:
-                st.caption(f"{r.get('source','')} / {r.get('ioc','')} — {r.get('reason','')}")
+                st.caption(f"{r.get('source','')} / {_e(r.get('ioc',''))} — {r.get('reason','')}")
 
 
 def _render_report(report: dict):
@@ -723,11 +727,11 @@ def _render_ioc_lookup(result: dict):
                 </div>
                 <div class="data-cell">
                     <div class="sub">ISP</div>
-                    <div class="value" style="font-size:13px;">{ab.get('isp','unknown')}</div>
+                    <div class="value" style="font-size:13px;">{_e(ab.get('isp','unknown'))}</div>
                 </div>
                 <div class="data-cell">
                     <div class="sub">Country</div>
-                    <div class="value">{ab.get('country','unknown')}</div>
+                    <div class="value">{_e(ab.get('country','unknown'))}</div>
                 </div>
             </div>
             <div class="verdict" style="color:{col};">{verdict}</div>
@@ -754,15 +758,15 @@ def _render_ioc_lookup(result: dict):
                 </div>
                 <div class="data-cell">
                     <div class="sub">Registered On</div>
-                    <div class="value" style="font-size:13px;">{wh.get('creation_date','unknown')}</div>
+                    <div class="value" style="font-size:13px;">{_e(wh.get('creation_date','unknown'))}</div>
                 </div>
                 <div class="data-cell">
                     <div class="sub">Registrar</div>
-                    <div class="value" style="font-size:13px;">{wh.get('registrar','unknown')}</div>
+                    <div class="value" style="font-size:13px;">{_e(wh.get('registrar','unknown'))}</div>
                 </div>
                 <div class="data-cell">
                     <div class="sub">Country</div>
-                    <div class="value">{wh.get('country','unknown')}</div>
+                    <div class="value">{_e(wh.get('country','unknown'))}</div>
                 </div>
             </div>
             <div class="verdict" style="color:{col};">{verdict}</div>
@@ -791,7 +795,7 @@ def _render_ioc_lookup(result: dict):
                 </div>
                 <div class="data-cell" style="flex:2;">
                     <div class="sub">Description</div>
-                    <div style="font-size:13px; color:#9ca3af; margin-top:6px; line-height:1.6;">{nvd_r.get('description','No description available.')}</div>
+                    <div style="font-size:13px; color:#9ca3af; margin-top:6px; line-height:1.6;">{nvd__e(r.get('description','No description available.'))}</div>
                 </div>
             </div>
             <div class="verdict" style="color:{col};">{verdict}</div>
@@ -952,19 +956,19 @@ def _build_pdf_html(parsed: dict, score_result: dict, techniques: list, report: 
     enrich_rows = ""
     for r in [x for x in parsed.get("vt_results",[]) if not x.get("skipped")]:
         mal = r.get("malicious",0); total = mal+r.get("suspicious",0)+r.get("harmless",0)
-        enrich_rows += _enrich_row("VirusTotal", r.get("ioc",""), f"{mal}/{total} vendors flagged",
+        enrich_rows += _enrich_row("VirusTotal", _e(r.get("ioc","")), f"{mal}/{total} vendors flagged",
                                    "Malicious" if mal>=3 else "Suspicious" if mal>=1 else "Clean")
     for r in [x for x in parsed.get("abuse_results",[]) if not x.get("skipped")]:
-        enrich_rows += _enrich_row("AbuseIPDB", r.get("ioc",""),
+        enrich_rows += _enrich_row("AbuseIPDB", _e(r.get("ioc","")),
                                    f"{r.get('abuse_confidence',0)}% abuse confidence",
-                                   f"{r.get('total_reports',0)} reports, {r.get('country','?')}")
+                                   f"{r.get('total_reports',0)} reports, {_e(r.get('country','?'))}")
     for r in parsed.get("whois_results",[]):
         age = r.get("age_days"); new = r.get("newly_registered",False)
         enrich_rows += _enrich_row("WHOIS", r.get("domain",""),
                                    f"{age} days old" if age else "Unknown age",
                                    "Newly registered" if new else "Established")
     for r in [x for x in parsed.get("nvd_results",[]) if not x.get("skipped")]:
-        enrich_rows += _enrich_row("NVD", r.get("ioc",""),
+        enrich_rows += _enrich_row("NVD", _e(r.get("ioc","")),
                                    f"CVSS {r.get('cvss_score',0)} / {r.get('severity','?').capitalize()}", "")
 
     enrich_section = (f"<table><thead><tr><th>Source</th><th>Indicator</th><th>Result</th><th>Notes</th></tr></thead>"

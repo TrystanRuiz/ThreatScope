@@ -1,10 +1,16 @@
 import httpx
+from app.utils.rate_limiter import RateLimiter
 from app.utils.config import config
 from app.utils.logger import get_logger
 
 log = get_logger(__name__)
 
 BASE_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
+# NVD limits: 50 req/30s with key, 5 req/30s without key
+def _nvd_limiter() -> RateLimiter:
+    return RateLimiter(calls_per_minute=50 if config.NVD_API_KEY else 10)
+
+_limiter = _nvd_limiter()
 
 async def lookup_cve(cve_id: str) -> dict:
     if config.OFFLINE_MODE:
@@ -14,6 +20,7 @@ async def lookup_cve(cve_id: str) -> dict:
     if config.NVD_API_KEY:
         headers["apiKey"] = config.NVD_API_KEY
 
+    await _limiter.acquire()
     try:
         async with httpx.AsyncClient(timeout=20) as client:
             resp = await client.get(BASE_URL, headers=headers, params={"cveId": cve_id.upper()})
