@@ -971,21 +971,24 @@ def _build_pdf_html(parsed: dict, score_result: dict, techniques: list, report: 
 <head>
 <meta charset="UTF-8">
 <style>
+@page {{ size: A4; margin: 0; }}
+@page content {{ margin: 40px 56px; }}
+
 * {{ margin:0; padding:0; box-sizing:border-box; }}
 
 body {{
   font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
   color: #1a1a2e;
-  font-size: 13px;
-  line-height: 1.65;
+  font-size: 11px;
+  line-height: 1.5;
   background: #fff;
 }}
 
-/* ══ COVER ══ */
+/* ══ COVER — full A4 page ══ */
 .cover {{
   background: #0d1729;
-  width: 100%;
-  height: 100vh;
+  width: 210mm;
+  height: 297mm;
   position: relative;
   overflow: hidden;
   page-break-after: always;
@@ -995,243 +998,164 @@ body {{
   align-items: center;
   text-align: center;
 }}
-
-/* Circles exactly matching the guide */
 .circle-tl {{
-  position: absolute;
-  width: 320px; height: 320px;
-  border-radius: 50%;
+  position: absolute; border-radius: 50%;
   background: #3b6fff;
-  top: -100px; left: -100px;
+  width: 220px; height: 220px;
+  top: -70px; left: -70px;
 }}
 .circle-br {{
-  position: absolute;
-  width: 260px; height: 260px;
-  border-radius: 50%;
+  position: absolute; border-radius: 50%;
   background: #3b6fff;
-  bottom: -80px; right: -80px;
+  width: 180px; height: 180px;
+  bottom: -55px; right: -55px;
   opacity: 0.85;
 }}
-
-/* Thin horizontal line near top like the guide */
 .cover-line {{
   position: absolute;
-  top: 200px; left: 120px; right: 40px;
-  height: 1px;
-  background: #1e3a5f;
+  top: 175px; left: 100px; right: 30px;
+  height: 1px; background: #1e3a5f;
 }}
-
 .cover-inner {{
-  position: relative;
-  z-index: 2;
-  padding: 0 60px;
-  max-width: 600px;
+  position: relative; z-index: 2;
+  padding: 0 50px; max-width: 480px;
 }}
+.cover-title  {{ font-size:44px; font-weight:300; color:#fff; margin-bottom:8px; }}
+.cover-sub    {{ font-size:18px; color:#7aadcf; font-weight:400; margin-bottom:8px; }}
+.cover-tagline{{ font-size:12px; color:#6a8fad; margin-bottom:22px; }}
+.cover-meta   {{ font-size:11px; color:#4a6a8a; line-height:2; }}
+.cover-score  {{
+  margin-top:26px; display:inline-block;
+  background:rgba(255,255,255,0.04);
+  border:1px solid {score_color}66; border-radius:10px; padding:12px 28px;
+}}
+.cover-score-label {{ font-size:9px; color:#4a7a9b; text-transform:uppercase; letter-spacing:1.5px; }}
+.cover-score-num   {{ font-size:42px; font-weight:700; color:{score_color}; line-height:1.1; }}
+.cover-score-level {{ font-size:14px; color:{score_color}; font-weight:600; margin-top:2px; }}
 
-.cover-title {{
-  font-size: 52px;
-  font-weight: 300;
-  color: #ffffff;
-  letter-spacing: 0;
-  margin-bottom: 10px;
-}}
-.cover-sub {{
-  font-size: 22px;
-  color: #7aadcf;
-  font-weight: 400;
-  margin-bottom: 10px;
-}}
-.cover-tagline {{
-  font-size: 14px;
-  color: #6a8fad;
-  margin-bottom: 28px;
-}}
-.cover-meta {{
-  font-size: 12px;
-  color: #4a6a8a;
-  line-height: 2;
-}}
-.cover-score {{
-  margin-top: 32px;
-  display: inline-block;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid {score_color}55;
-  border-radius: 10px;
-  padding: 14px 32px;
-}}
-.cover-score-label {{ font-size:10px; color:#4a7a9b; text-transform:uppercase; letter-spacing:1.5px; }}
-.cover-score-num   {{ font-size:48px; font-weight:700; color:{score_color}; line-height:1.1; }}
-.cover-score-level {{ font-size:16px; color:{score_color}; font-weight:600; margin-top:2px; }}
-
-/* ══ CONTENT PAGES ══ */
+/* ══ CONTENT PAGE ══ */
 .page {{
-  padding: 44px 56px 56px;
+  width: 210mm;
+  min-height: 297mm;
+  padding: 36px 52px 44px;
   background: #fff;
   page-break-before: always;
 }}
-
-/* Small header exactly like the guide */
 .page-hdr {{
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 11px;
-  color: #9ca3af;
-  margin-bottom: 28px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #e5e7eb;
+  display:flex; justify-content:space-between; align-items:center;
+  font-size:9px; color:#9ca3af;
+  margin-bottom:20px; padding-bottom:8px;
+  border-bottom:1px solid #e5e7eb;
 }}
-.page-hdr-brand {{ color: #6b7280; font-weight: 500; }}
-.page-hdr-page  {{ color: #9ca3af; }}
 
-/* Blue section headers — exactly like the guide */
 h2 {{
-  font-size: 18px;
-  font-weight: 700;
-  color: #2563eb;
-  margin: 26px 0 10px;
-  padding-bottom: 0;
+  font-size:14px; font-weight:700; color:#2563eb;
+  margin:18px 0 7px;
 }}
 
-/* Body text */
-p {{ color: #374151; margin: 6px 0; }}
-
-/* Orange callout exactly like the guide */
 .callout-warn {{
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
-  border-left: 4px solid #f97316;
-  border-radius: 4px;
-  padding: 12px 16px;
-  margin: 10px 0;
-  font-size: 12.5px;
-  color: #7c2d12;
-  line-height: 1.6;
+  background:#fff7ed; border:1px solid #fed7aa;
+  border-left:4px solid #f97316; border-radius:0 4px 4px 0;
+  padding:9px 13px; margin:7px 0;
+  font-size:10.5px; color:#7c2d12; line-height:1.55;
 }}
 .callout-note {{
-  background: #f0f9ff;
-  border-left: 4px solid #2563eb;
-  padding: 12px 16px;
-  border-radius: 0 4px 4px 0;
-  font-size: 12.5px;
-  color: #1e3a5f;
-  line-height: 1.7;
+  background:#f0f9ff; border-left:4px solid #2563eb;
+  padding:9px 13px; border-radius:0 4px 4px 0;
+  font-size:10.5px; color:#1e3a5f; line-height:1.6;
 }}
 
-/* Score signals */
 .signal-row {{
-  display: flex;
-  justify-content: space-between;
-  padding: 7px 12px;
-  border-bottom: 1px solid #f3f4f6;
-  font-size: 12px;
+  display:flex; justify-content:space-between;
+  padding:5px 10px; border-bottom:1px solid #f3f4f6; font-size:10.5px;
 }}
-.signal-row:last-child {{ border-bottom: none; }}
-.signal-pts {{ font-weight: 700; color: {score_color}; }}
+.signal-row:last-child {{ border-bottom:none; }}
+.signal-pts {{ font-weight:700; color:{score_color}; }}
 
-/* IOC items */
-.ioc-group {{ margin: 4px 0 12px; }}
+.ioc-group {{ margin:3px 0 8px; }}
 .ioc-label {{
-  font-size: 10px; font-weight: 700; color: #6b7280;
-  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px;
+  font-size:9px; font-weight:700; color:#6b7280;
+  text-transform:uppercase; letter-spacing:1px; margin-bottom:2px;
 }}
 .ioc-item {{
-  font-family: 'Courier New', monospace;
-  font-size: 11px; color: #1e3a5f;
-  background: #f8fafc; border: 1px solid #e5e7eb;
-  border-radius: 3px; padding: 4px 8px; margin: 2px 0;
-  word-break: break-all;
+  font-family:'Courier New',monospace; font-size:9.5px; color:#1e3a5f;
+  background:#f8fafc; border:1px solid #e5e7eb;
+  border-radius:3px; padding:3px 7px; margin:2px 0; word-break:break-all;
 }}
 
-/* Tables */
-table {{ width:100%; border-collapse:collapse; font-size:12px; margin:6px 0 16px; }}
+table {{ width:100%; border-collapse:collapse; font-size:10px; margin:4px 0 12px; }}
 th {{
-  background: #f8fafc; color: #6b7280; font-weight: 600;
-  font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px;
-  padding: 8px 12px; text-align: left; border-bottom: 2px solid #e5e7eb;
+  background:#f8fafc; color:#6b7280; font-weight:600;
+  font-size:8.5px; text-transform:uppercase; letter-spacing:0.7px;
+  padding:6px 10px; text-align:left; border-bottom:2px solid #e5e7eb;
 }}
-td {{ padding: 8px 12px; border-bottom: 1px solid #f3f4f6; color: #374151; vertical-align: top; }}
-tr:last-child td {{ border-bottom: none; }}
-.td-id {{ font-family:monospace; font-weight:800; color:#2563eb; white-space:nowrap; }}
-.td-desc {{ color:#6b7280; font-size:11px; }}
-.td-note {{ color:#9ca3af; font-size:11px; }}
-.td-ioc {{ font-family:monospace; font-size:10.5px; word-break:break-all; }}
+td {{ padding:6px 10px; border-bottom:1px solid #f3f4f6; color:#374151; vertical-align:top; }}
+tr:last-child td {{ border-bottom:none; }}
+.td-id   {{ font-family:monospace; font-weight:800; color:#2563eb; white-space:nowrap; font-size:10px; }}
+.td-desc {{ color:#6b7280; font-size:9px; }}
+.td-note {{ color:#9ca3af; font-size:9px; }}
+.td-ioc  {{ font-family:monospace; font-size:9px; word-break:break-all; }}
 
-/* Lists */
-ul {{ padding-left: 18px; margin: 6px 0; }}
-li {{ margin: 5px 0; color: #374151; }}
-li::marker {{ color: #2563eb; }}
+ul {{ padding-left:16px; margin:4px 0; }}
+li {{ margin:3px 0; color:#374151; font-size:10.5px; }}
+li::marker {{ color:#2563eb; }}
 
-.none {{ color: #9ca3af; font-style: italic; font-size: 12px; }}
+.none {{ color:#9ca3af; font-style:italic; font-size:10px; }}
 
-/* Footer exactly like the guide */
 .footer {{
-  margin-top: 40px;
-  padding-top: 12px;
-  border-top: 1px solid #e5e7eb;
-  font-size: 10px;
-  color: #9ca3af;
-  text-align: center;
+  margin-top:28px; padding-top:10px;
+  border-top:1px solid #e5e7eb;
+  font-size:8.5px; color:#9ca3af; text-align:center;
 }}
 </style>
 </head>
 <body>
 
-<!-- ══ COVER — matches guide exactly ══ -->
+<!-- ══ COVER ══ -->
 <div class="cover">
   <div class="circle-tl"></div>
   <div class="circle-br"></div>
   <div class="cover-line"></div>
-
   <div class="cover-inner">
     <div class="cover-title">ThreatScope</div>
     <div class="cover-sub">Security Investigation Report</div>
     <div class="cover-tagline">Local-first phishing and alert triage</div>
-    <div class="cover-meta">
-      {subject}<br>
-      {date}
-    </div>
+    <div class="cover-meta">{subject}<br>{date}</div>
     <div class="cover-score">
       <div class="cover-score-label">Risk Score</div>
-      <div class="cover-score-num">{s}<span style="font-size:22px; color:#1e3a5f; font-weight:300;">/100</span></div>
+      <div class="cover-score-num">{s}<span style="font-size:18px;color:#1e3a5f;font-weight:300;">/100</span></div>
       <div class="cover-score-level">{level} Risk</div>
     </div>
   </div>
 </div>
 
-<!-- ══ REPORT PAGE — overview ══ -->
+<!-- ══ REPORT ══ -->
 <div class="page">
   <div class="page-hdr">
-    <span class="page-hdr-brand">ThreatScope Security Report</span>
-    <span class="page-hdr-page">{date}</span>
+    <span>ThreatScope Security Report</span>
+    <span>{date}</span>
   </div>
 
   <h2>Executive Summary</h2>
   <div class="callout-note">{report.get("executive_summary","No summary generated.")}</div>
 
-  <div style="display:flex; gap:36px; align-items:flex-start; margin-top:4px;">
+  <div style="display:flex;gap:28px;align-items:flex-start;margin-top:2px;">
     <div style="flex:1;">
-
       <h2>Risk Score Breakdown</h2>
-      <div style="border:1px solid #f3f4f6; border-radius:6px; overflow:hidden; margin-bottom:8px;">
+      <div style="border:1px solid #f3f4f6;border-radius:5px;overflow:hidden;">
         {breakdown_html}
       </div>
-
       <h2>Indicators of Compromise</h2>
       {ioc_html if ioc_html else "<p class='none'>No indicators extracted.</p>"}
-
     </div>
     <div style="flex:1;">
-
-      <h2>MITRE ATT&CK</h2>
+      <h2>MITRE ATT&amp;CK</h2>
       <table>
         <thead><tr><th>ID</th><th>Technique</th><th>Conf.</th><th>Description</th></tr></thead>
         <tbody>{mitre_html}</tbody>
       </table>
-
       <h2>Threat Intelligence</h2>
       {enrich_section}
-
     </div>
   </div>
 
@@ -1243,8 +1167,8 @@ li::marker {{ color: #2563eb; }}
 
   {("<h2>Analyst Notes</h2><div class='callout-note'>" + report.get('analyst_notes','') + "</div>") if report.get('analyst_notes') else ""}
 
-  <div class="callout-warn" style="margin-top:20px;">
-    All findings are investigative aids and require human review before action is taken.
+  <div class="callout-warn" style="margin-top:16px;">
+    All findings are investigative aids requiring human review before action is taken.
     Risk scores, MITRE mappings, and AI-generated content are not authoritative determinations.
   </div>
 
