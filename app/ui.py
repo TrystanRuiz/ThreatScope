@@ -1037,75 +1037,75 @@ body {{
 .page {{
   width: 210mm;
   min-height: 297mm;
-  padding: 36px 52px 44px;
+  padding: 28px 48px 36px;
   background: #fff;
   page-break-before: always;
 }}
 .page-hdr {{
   display:flex; justify-content:space-between; align-items:center;
-  font-size:9px; color:#9ca3af;
-  margin-bottom:20px; padding-bottom:8px;
+  font-size:8.5px; color:#9ca3af;
+  margin-bottom:14px; padding-bottom:6px;
   border-bottom:1px solid #e5e7eb;
 }}
 
 h2 {{
-  font-size:14px; font-weight:700; color:#2563eb;
-  margin:18px 0 7px;
+  font-size:12px; font-weight:700; color:#2563eb;
+  margin:12px 0 5px;
 }}
 
 .callout-warn {{
   background:#fff7ed; border:1px solid #fed7aa;
   border-left:4px solid #f97316; border-radius:0 4px 4px 0;
-  padding:9px 13px; margin:7px 0;
-  font-size:10.5px; color:#7c2d12; line-height:1.55;
+  padding:7px 11px; margin:5px 0;
+  font-size:9.5px; color:#7c2d12; line-height:1.5;
 }}
 .callout-note {{
   background:#f0f9ff; border-left:4px solid #2563eb;
-  padding:9px 13px; border-radius:0 4px 4px 0;
-  font-size:10.5px; color:#1e3a5f; line-height:1.6;
+  padding:7px 11px; border-radius:0 4px 4px 0;
+  font-size:9.5px; color:#1e3a5f; line-height:1.55;
 }}
 
 .signal-row {{
   display:flex; justify-content:space-between;
-  padding:5px 10px; border-bottom:1px solid #f3f4f6; font-size:10.5px;
+  padding:4px 9px; border-bottom:1px solid #f3f4f6; font-size:9.5px;
 }}
 .signal-row:last-child {{ border-bottom:none; }}
 .signal-pts {{ font-weight:700; color:{score_color}; }}
 
-.ioc-group {{ margin:3px 0 8px; }}
+.ioc-group {{ margin:2px 0 6px; }}
 .ioc-label {{
-  font-size:9px; font-weight:700; color:#6b7280;
+  font-size:8px; font-weight:700; color:#6b7280;
   text-transform:uppercase; letter-spacing:1px; margin-bottom:2px;
 }}
 .ioc-item {{
-  font-family:'Courier New',monospace; font-size:9.5px; color:#1e3a5f;
+  font-family:'Courier New',monospace; font-size:8.5px; color:#1e3a5f;
   background:#f8fafc; border:1px solid #e5e7eb;
-  border-radius:3px; padding:3px 7px; margin:2px 0; word-break:break-all;
+  border-radius:3px; padding:2px 6px; margin:1px 0; word-break:break-all;
 }}
 
-table {{ width:100%; border-collapse:collapse; font-size:10px; margin:4px 0 12px; }}
+table {{ width:100%; border-collapse:collapse; font-size:9px; margin:3px 0 10px; }}
 th {{
   background:#f8fafc; color:#6b7280; font-weight:600;
-  font-size:8.5px; text-transform:uppercase; letter-spacing:0.7px;
-  padding:6px 10px; text-align:left; border-bottom:2px solid #e5e7eb;
+  font-size:7.5px; text-transform:uppercase; letter-spacing:0.6px;
+  padding:5px 8px; text-align:left; border-bottom:1.5px solid #e5e7eb;
 }}
-td {{ padding:6px 10px; border-bottom:1px solid #f3f4f6; color:#374151; vertical-align:top; }}
+td {{ padding:5px 8px; border-bottom:1px solid #f3f4f6; color:#374151; vertical-align:top; }}
 tr:last-child td {{ border-bottom:none; }}
-.td-id   {{ font-family:monospace; font-weight:800; color:#2563eb; white-space:nowrap; font-size:10px; }}
-.td-desc {{ color:#6b7280; font-size:9px; }}
-.td-note {{ color:#9ca3af; font-size:9px; }}
-.td-ioc  {{ font-family:monospace; font-size:9px; word-break:break-all; }}
+.td-id   {{ font-family:monospace; font-weight:800; color:#2563eb; white-space:nowrap; font-size:9px; }}
+.td-desc {{ color:#6b7280; font-size:8px; }}
+.td-note {{ color:#9ca3af; font-size:8px; }}
+.td-ioc  {{ font-family:monospace; font-size:8px; word-break:break-all; }}
 
-ul {{ padding-left:16px; margin:4px 0; }}
-li {{ margin:3px 0; color:#374151; font-size:10.5px; }}
+ul {{ padding-left:14px; margin:3px 0; }}
+li {{ margin:2px 0; color:#374151; font-size:9.5px; }}
 li::marker {{ color:#2563eb; }}
 
-.none {{ color:#9ca3af; font-style:italic; font-size:10px; }}
+.none {{ color:#9ca3af; font-style:italic; font-size:9px; }}
 
 .footer {{
-  margin-top:28px; padding-top:10px;
+  margin-top:16px; padding-top:8px;
   border-top:1px solid #e5e7eb;
-  font-size:8.5px; color:#9ca3af; text-align:center;
+  font-size:7.5px; color:#9ca3af; text-align:center;
 }}
 </style>
 </head>
@@ -1165,15 +1165,8 @@ li::marker {{ color:#2563eb; }}
   <h2>Recommended Actions</h2>
   {"<ul>" + actions_html + "</ul>" if actions_html else "<p class='none'>No actions generated.</p>"}
 
-  {("<h2>Analyst Notes</h2><div class='callout-note'>" + report.get('analyst_notes','') + "</div>") if report.get('analyst_notes') else ""}
-
-  <div class="callout-warn" style="margin-top:16px;">
-    All findings are investigative aids requiring human review before action is taken.
-    Risk scores, MITRE mappings, and AI-generated content are not authoritative determinations.
-  </div>
-
   <div class="footer">
-    ThreatScope &nbsp;|&nbsp; Defensive security education only &nbsp;|&nbsp; Validate all findings manually
+    ThreatScope &nbsp;|&nbsp; All findings require human review before action is taken &nbsp;|&nbsp; Defensive security education only &nbsp;|&nbsp; Validate all findings manually
   </div>
 </div>
 
