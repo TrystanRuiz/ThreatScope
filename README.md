@@ -112,6 +112,27 @@ source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+### 3a. Enable PDF export (optional)
+
+PDF export requires system-level libraries depending on your OS. Skip this step if you only need Markdown reports.
+
+**macOS:**
+```bash
+brew install pango
+```
+
+**Linux (Ubuntu/Debian):**
+```bash
+sudo apt-get install libpango-1.0-0 libpangoft2-1.0-0 libpangocairo-1.0-0
+```
+
+**Windows:**
+```bash
+pip install weasyprint
+```
+
+Restart the app after installing. If the libraries are not found, the PDF button will show "PDF export unavailable" and the rest of the app will continue to work normally.
+
 ### 4. Configure API keys
 
 ```bash
