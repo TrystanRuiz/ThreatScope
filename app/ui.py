@@ -866,28 +866,50 @@ elif page == "Batch Analysis":
 
     if st.button("Analyze All", type="primary") and uploaded_files:
         results = []
+        total_files = len(uploaded_files)
+        overall_bar  = st.progress(0, text=f"Analyzing 0 of {total_files} files...")
+        file_bar     = st.progress(0, text="")
+        info         = st.empty()
+
         for i, f in enumerate(uploaded_files):
-            with st.status(f"Analyzing {f.name} ({i+1}/{len(uploaded_files)})...", expanded=False) as s:
-                raw = f.read().decode("utf-8", errors="replace")
-                parsed = parse_raw_email(raw)
-                enrichment = asyncio.run(_enrich(parsed))
-                parsed.update(enrichment)
-                techniques = map_techniques(parsed)
-                parsed["mitre_techniques"] = techniques
-                score_result = score(parsed)
-                parsed["score"] = score_result
-                report = generate_report(parsed)
-                _save_report(parsed, score_result, techniques, report)
-                results.append({
-                    "File": f.name,
-                    "Subject": parsed.get("subject", "unknown")[:50],
-                    "Score": score_result["score"],
-                    "Level": score_result["level"],
-                    "Sender Mismatch": "Yes" if parsed.get("sender_mismatch") else "No",
-                    "IOCs Found": sum(len(v) for v in parsed.get("iocs", {}).values()),
-                    "MITRE Techniques": len(techniques),
-                })
-                s.update(label=f"✅ {f.name} — {score_result['score']}/100 ({score_result['level']})", state="complete")
+            overall_bar.progress(int((i / total_files) * 100), text=f"File {i+1} of {total_files}: {f.name}")
+
+            info.caption("Parsing email...")
+            file_bar.progress(10, text="Parsing...")
+            raw = f.read().decode("utf-8", errors="replace")
+            parsed = parse_raw_email(raw)
+
+            info.caption("Checking threat intelligence...")
+            file_bar.progress(30, text="Threat intel lookups...")
+            enrichment = asyncio.run(_enrich(parsed))
+            parsed.update(enrichment)
+
+            info.caption("Mapping techniques and scoring...")
+            file_bar.progress(65, text="Scoring...")
+            techniques = map_techniques(parsed)
+            parsed["mitre_techniques"] = techniques
+            score_result = score(parsed)
+            parsed["score"] = score_result
+
+            info.caption("Generating AI report...")
+            file_bar.progress(80, text="Generating report...")
+            report = generate_report(parsed)
+
+            _save_report(parsed, score_result, techniques, report)
+            results.append({
+                "File": f.name,
+                "Subject": parsed.get("subject", "unknown")[:50],
+                "Score": score_result["score"],
+                "Level": score_result["level"],
+                "Sender Mismatch": "Yes" if parsed.get("sender_mismatch") else "No",
+                "IOCs Found": sum(len(v) for v in parsed.get("iocs", {}).values()),
+                "MITRE Techniques": len(techniques),
+            })
+            file_bar.progress(100, text=f"Done: {score_result['score']}/100 ({score_result['level']})")
+
+        overall_bar.progress(100, text=f"All {total_files} files analyzed.")
+        file_bar.empty()
+        info.empty()
 
         st.markdown("---")
         st.subheader("Batch Results Summary")
@@ -945,15 +967,35 @@ elif page == "Email Analyzer":
         raw_email = uploaded.read().decode("utf-8", errors="replace") if uploaded else ""
 
     if analyze and raw_email:
-        with st.status("Running analysis...", expanded=True) as status:
-            st.write("Parsing email structure and headers...")
-            parsed = parse_raw_email(raw_email)
-            st.write("Checking links and IPs against threat databases...")
-            st.write("Identifying attack techniques...")
-            st.write("Calculating risk score...")
-            st.write("Generating report...")
-            parsed, score_result, techniques, report = _run_full_analysis(parsed)
-            status.update(label="Analysis complete.", state="complete")
+        bar  = st.progress(0, text="Starting analysis...")
+        info = st.empty()
+
+        info.caption("Parsing email structure and headers...")
+        bar.progress(10, text="Parsing email...")
+        parsed = parse_raw_email(raw_email)
+
+        info.caption("Checking IPs, domains, and URLs against threat databases. This may take a moment...")
+        bar.progress(25, text="Running threat intelligence lookups...")
+        enrichment = asyncio.run(_enrich(parsed))
+        parsed.update(enrichment)
+
+        info.caption("Mapping to MITRE ATT&CK framework...")
+        bar.progress(60, text="Mapping attack techniques...")
+        techniques = map_techniques(parsed)
+        parsed["mitre_techniques"] = techniques
+
+        info.caption("Calculating risk score...")
+        bar.progress(70, text="Scoring...")
+        score_result = score(parsed)
+        parsed["score"] = score_result
+
+        info.caption("Generating AI investigation report. This is the slowest step — usually 30 to 90 seconds depending on your hardware...")
+        bar.progress(75, text="Generating AI report — please wait...")
+        report = generate_report(parsed)
+
+        bar.progress(100, text="Analysis complete.")
+        info.empty()
+        bar.empty()
 
         st.markdown("---")
         _render_score(score_result)
@@ -1016,14 +1058,35 @@ elif page == "Alert Triage":
         placeholder="Paste a SIEM alert, Windows Event Log, firewall log, or any security alert here...")
 
     if st.button("Triage", type="primary") and log_input:
-        with st.status("Analyzing alert...", expanded=True) as status:
-            st.write("Parsing alert and extracting indicators...")
-            st.write("Checking against threat intelligence...")
-            st.write("Scoring and identifying techniques...")
-            st.write("Generating triage report...")
-            parsed = parse_log(log_input)
-            parsed, score_result, techniques, report = _run_full_analysis(parsed)
-            status.update(label="Triage complete.", state="complete")
+        bar  = st.progress(0, text="Starting triage...")
+        info = st.empty()
+
+        info.caption("Parsing alert and extracting indicators...")
+        bar.progress(10, text="Parsing alert...")
+        parsed = parse_log(log_input)
+
+        info.caption("Checking indicators against threat intelligence databases...")
+        bar.progress(25, text="Running threat intelligence lookups...")
+        enrichment = asyncio.run(_enrich(parsed))
+        parsed.update(enrichment)
+
+        info.caption("Mapping to MITRE ATT&CK framework...")
+        bar.progress(60, text="Mapping attack techniques...")
+        techniques = map_techniques(parsed)
+        parsed["mitre_techniques"] = techniques
+
+        info.caption("Calculating risk score...")
+        bar.progress(70, text="Scoring...")
+        score_result = score(parsed)
+        parsed["score"] = score_result
+
+        info.caption("Generating AI triage report. Usually 30 to 90 seconds...")
+        bar.progress(75, text="Generating AI report — please wait...")
+        report = generate_report(parsed)
+
+        bar.progress(100, text="Triage complete.")
+        info.empty()
+        bar.empty()
 
         st.markdown("---")
         _render_score(score_result)
