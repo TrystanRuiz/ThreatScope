@@ -19,16 +19,20 @@ Built for SOC analysts, security students, and homelab operators who want a prac
 ## Features
 
 - **Email Analysis:** Parse raw email text or `.eml` files. Detects sender spoofing, SPF/DKIM/DMARC failures, urgency language, and suspicious attachments
+- **Email Header Visualizer:** Shows SPF/DKIM/DMARC pass/fail badges, sender domain mismatch comparison, and routing hop count with plain-English explanation
 - **IOC Extraction:** Automatically extracts and defangs IPs, domains, URLs, MD5/SHA1/SHA256 hashes, CVE IDs, and email addresses
 - **Threat Intelligence Enrichment:** Real-time lookups via VirusTotal, AbuseIPDB, MalwareBazaar, NVD CVE database, and WHOIS with async rate limiting
-- **MITRE ATT&CK Mapping:** Maps detected behaviors to ATT&CK techniques with plain-English explanations and confidence scoring
+- **MITRE ATT&CK Mapping:** 20 technique rules with high/medium/low confidence scoring and plain-English descriptions for every technique
 - **Explainable Risk Scoring:** Deterministic 0-100 risk score with a per-signal breakdown showing exactly why each point was added
 - **AI Investigation Report:** Local LLM via Ollama generates a structured SOC-style report from the evidence. No data leaves your machine
+- **PDF Export:** Branded 2-page PDF report — dark navy cover page with risk score, full findings on page 2. Generated at analysis time and downloadable any time from the Reports page
 - **Alert Triage:** Supports SIEM-style log snippets in addition to emails
-- **Batch Analysis:** Upload and analyze multiple `.eml` files at once with a results summary table
-- **IOC Lookup:** One-off lookup for any IP, domain, URL, hash, or CVE
+- **Batch Analysis:** Upload and analyze multiple `.eml` files at once with a color-coded results summary table
+- **IOC Lookup:** One-off lookup for any IP, domain, URL, hash, or CVE with plain-English verdicts
+- **Dashboard:** Analytics overview showing total analyses, average risk score, risk level distribution chart, and recent analyses list
+- **Reports Page:** Search, filter by risk level, sort, delete, download individual reports as Markdown or PDF, and export all reports as a zip file
+- **Progress Bars:** Step-by-step progress display during analysis so you always know what the tool is doing
 - **Plain-English Output:** Every finding is explained in non-technical language, making it accessible to analysts at any level
-- **Report Export:** All reports saved as Markdown files, downloadable from within the app
 - **Offline Mode:** Run without API keys for testing or demos
 
 ---
@@ -48,7 +52,7 @@ IOC extractor finds IPs, domains, URLs, hashes, CVEs
 Threat intel enrichment (VirusTotal, AbuseIPDB, MalwareBazaar, NVD, WHOIS)
         │
         ▼
-MITRE ATT&CK technique mapping
+MITRE ATT&CK technique mapping (20 rules, confidence scored)
         │
         ▼
 Deterministic risk scoring engine
@@ -57,7 +61,7 @@ Deterministic risk scoring engine
 Local LLM generates SOC-style investigation report
         │
         ▼
-Report saved as Markdown
+Report saved as Markdown and PDF
 ```
 
 Python handles all evidence collection, IOC extraction, API calls, and scoring. The LLM only handles summarization and report writing. This keeps the tool fast, deterministic, and auditable.
@@ -79,7 +83,8 @@ Python handles all evidence collection, IOC extraction, API calls, and scoring. 
 | Email Parsing | Python email stdlib | Full `.eml` and raw email parsing |
 | HTTP Client | httpx | Async API calls with rate limiting |
 | Validation | Pydantic | Structured evidence and report schemas |
-| Export | Markdown | Report saving and download |
+| PDF Export | weasyprint | Branded 2-page PDF report generation |
+| Data | pandas | Batch analysis results and dashboard charts |
 
 ---
 
@@ -188,7 +193,7 @@ ThreatScope/
 │   ├── ui.py                   # Streamlit app entry point
 │   ├── agents/
 │   │   ├── analyst_agent.py    # LLM report generation via Ollama
-│   │   ├── mitre_agent.py      # MITRE ATT&CK technique mapping
+│   │   ├── mitre_agent.py      # MITRE ATT&CK technique mapping (20 rules)
 │   │   └── scoring_agent.py    # Deterministic risk scoring
 │   ├── parsers/
 │   │   ├── email_parser.py     # .eml and raw email parsing
@@ -211,7 +216,7 @@ ThreatScope/
 │   │   └── logger.py           # Logging setup
 │   └── data/
 │       └── sample_emails/      # Sample phishing emails for testing
-├── reports/                    # Auto-saved Markdown reports
+├── reports/                    # Auto-saved Markdown and PDF reports
 ├── sample_reports/             # Example reports included in repo
 ├── screenshots/                # App screenshots
 ├── requirements.txt
@@ -239,14 +244,6 @@ ThreatScope/
 The `app/data/sample_emails/` directory contains synthetic phishing email samples for testing. These are entirely fictional and safe to use.
 
 Do not test ThreatScope with real employee or customer emails, internal corporate logs, private IP ranges, or any data you do not have authorization to analyze.
-
----
-
-## Roadmap
-
-- [ ] PDF report export
-- [ ] Wazuh/SIEM alert ingestion
-- [ ] Docker Compose setup with Ollama included
 
 ---
 
