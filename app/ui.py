@@ -25,112 +25,191 @@ st.set_page_config(page_title="ThreatScope", page_icon="🛡️", layout="wide")
 st.markdown("""
 <style>
 /* ── Layout ── */
-.block-container { max-width: 1100px; padding-top: 2rem; padding-bottom: 3rem; }
+.block-container { max-width: 1080px; padding-top: 1.5rem; padding-bottom: 4rem; }
 
 /* ── Page header ── */
-.page-header { margin-bottom: 6px; }
-.page-header h1 { font-size: 28px; font-weight: 700; color: #f0f0f0; margin: 0; }
-.page-header p  { font-size: 14px; color: #777; margin: 4px 0 0 0; }
+.page-header { margin-bottom: 4px; }
+.page-header h1 { font-size: 26px; font-weight: 700; color: #f0f0f0; margin: 0 0 4px 0; letter-spacing: -0.3px; }
+.page-header p  { font-size: 14px; color: #5a5f72; margin: 0; }
 
 /* ── Cards ── */
 .card {
-    background: #1a1d2e;
-    border-radius: 10px;
-    padding: 18px 22px;
+    background: #181b29;
+    border-radius: 12px;
+    padding: 20px 24px;
     margin-bottom: 10px;
-    border-left: 4px solid #2a2d3e;
-    transition: border-left-color 0.2s;
+    border: 1px solid #1f2235;
+    border-left: 4px solid #1f2235;
 }
-.card.critical { border-left-color: #ff4b4b; }
-.card.high     { border-left-color: #ff8c00; }
-.card.medium   { border-left-color: #ffd700; }
-.card.low      { border-left-color: #21c55d; }
-.card.clean    { border-left-color: #21c55d; }
-.card.info     { border-left-color: #3b82f6; }
+.card.critical { border-left-color: #ef4444; background: #1c1520; }
+.card.high     { border-left-color: #f97316; background: #1c1a17; }
+.card.medium   { border-left-color: #eab308; background: #1c1c15; }
+.card.low      { border-left-color: #22c55e; background: #151c18; }
+.card.clean    { border-left-color: #22c55e; background: #151c18; }
+.card.info     { border-left-color: #3b82f6; background: #151824; }
+.card.neutral  { border-left-color: #2a2d3e; }
 
 /* ── Typography ── */
-.label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 6px; }
-.big   { font-size: 38px; font-weight: 800; line-height: 1; }
-.plain { font-size: 14px; color: #bbb; line-height: 1.65; margin-top: 6px; }
-.sub   { font-size: 12px; color: #666; margin-top: 2px; }
-.mono  { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; }
+.label { font-size: 11px; color: #4a4f62; text-transform: uppercase; letter-spacing: 1.4px; margin-bottom: 8px; font-weight: 600; }
+.big   { font-size: 42px; font-weight: 800; line-height: 1; letter-spacing: -1px; }
+.plain { font-size: 14px; color: #9ca3af; line-height: 1.7; margin-top: 6px; }
+.sub   { font-size: 12px; color: #4a4f62; margin-top: 3px; line-height: 1.4; }
+.mono  { font-family: 'SF Mono', ui-monospace, 'Cascadia Code', monospace; font-size: 13px; }
+.value { font-size: 15px; color: #d1d5db; font-weight: 500; margin-top: 4px; }
+.verdict { font-size: 14px; font-weight: 600; margin-top: 14px; padding-top: 14px; border-top: 1px solid #1f2235; }
 
 /* ── Badges ── */
 .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; margin: 2px; letter-spacing: 0.3px; }
-.b-red { background: #ff4b4b18; color: #ff4b4b; border: 1px solid #ff4b4b44; }
-.b-ora { background: #ff8c0018; color: #ff8c00; border: 1px solid #ff8c0044; }
-.b-yel { background: #ffd70018; color: #ffd700; border: 1px solid #ffd70044; }
-.b-grn { background: #21c55d18; color: #21c55d; border: 1px solid #21c55d44; }
-.b-blu { background: #3b82f618; color: #3b82f6; border: 1px solid #3b82f644; }
-.b-gry { background: #44444418; color: #888;    border: 1px solid #44444444; }
+.b-red { background: #ef444418; color: #ef4444; border: 1px solid #ef444440; }
+.b-ora { background: #f9731618; color: #f97316; border: 1px solid #f9731640; }
+.b-yel { background: #eab30818; color: #eab308; border: 1px solid #eab30840; }
+.b-grn { background: #22c55e18; color: #22c55e; border: 1px solid #22c55e40; }
+.b-blu { background: #3b82f618; color: #3b82f6; border: 1px solid #3b82f640; }
+.b-gry { background: #6b728018; color: #6b7280; border: 1px solid #6b728040; }
+
+/* ── Type tag (IOC labels) ── */
+.type-tag {
+    display: inline-block;
+    background: #1f2235;
+    color: #6b7280;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-right: 10px;
+    vertical-align: middle;
+    font-family: monospace;
+}
 
 /* ── IOC rows ── */
 .ioc-row {
-    background: #12141f;
-    border-radius: 6px;
-    padding: 9px 14px;
-    margin: 3px 0;
-    font-family: 'SF Mono', 'Fira Code', monospace;
+    background: #0f1120;
+    border-radius: 8px;
+    padding: 10px 16px;
+    margin: 4px 0;
+    font-family: 'SF Mono', ui-monospace, monospace;
     font-size: 13px;
-    color: #d0d0d0;
-    border: 1px solid #1e2130;
+    color: #c9d1e0;
+    border: 1px solid #1a1d2e;
+    display: flex;
+    align-items: center;
 }
+.ioc-danger { color: #ef4444; }
 
 /* ── Finding / Action items ── */
-.finding { background: #1a1d2e; border-radius: 6px; padding: 10px 16px; margin: 5px 0; border-left: 3px solid #3b82f6; font-size: 14px; color: #ccc; line-height: 1.5; }
-.action  { background: #141f19; border-radius: 6px; padding: 10px 16px; margin: 5px 0; border-left: 3px solid #21c55d; font-size: 14px; color: #ccc; line-height: 1.5; }
-
-/* ── Section dividers ── */
-.section {
-    font-size: 13px;
-    font-weight: 600;
-    color: #555;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin: 28px 0 12px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #1e2130;
+.finding {
+    background: #141828;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 5px 0;
+    border-left: 3px solid #3b82f6;
+    font-size: 14px;
+    color: #c9d1e0;
+    line-height: 1.6;
 }
+.action {
+    background: #111c17;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 5px 0;
+    border-left: 3px solid #22c55e;
+    font-size: 14px;
+    color: #c9d1e0;
+    line-height: 1.6;
+}
+
+/* ── Section headers ── */
+.section {
+    font-size: 12px;
+    font-weight: 700;
+    color: #4a4f62;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin: 32px 0 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #1a1d2e;
+}
+
+/* ── Score bar ── */
+.score-bar-track {
+    background: #1a1d2e;
+    border-radius: 6px;
+    height: 8px;
+    margin-top: 14px;
+    overflow: hidden;
+}
+.score-bar-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.3s ease;
+}
+
+/* ── Data grid ── */
+.data-grid {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin: 14px 0;
+}
+.data-cell { min-width: 80px; }
 
 /* ── Sidebar ── */
 [data-testid="stSidebar"] {
-    background: #12141f;
-    border-right: 1px solid #1e2130;
+    background: #0d0f1a;
+    border-right: 1px solid #1a1d2e;
 }
-[data-testid="stSidebar"] .stSelectbox label { color: #888; font-size: 12px; }
 
 /* ── Buttons ── */
 .stButton > button {
     border-radius: 8px;
     font-weight: 600;
     font-size: 14px;
-    padding: 8px 20px;
     transition: opacity 0.15s;
 }
-.stButton > button:hover { opacity: 0.85; }
+.stButton > button:hover { opacity: 0.82; }
 
 /* ── Inputs ── */
 .stTextArea textarea, .stTextInput input {
-    background: #12141f;
-    border: 1px solid #2a2d3e;
-    border-radius: 8px;
-    color: #e0e0e0;
-    font-size: 14px;
+    background: #0f1120 !important;
+    border: 1px solid #1f2235 !important;
+    border-radius: 8px !important;
+    color: #e0e0e0 !important;
+    font-size: 14px !important;
+}
+.stTextArea textarea:focus, .stTextInput input:focus {
+    border-color: #3b82f6 !important;
 }
 
 /* ── Divider ── */
-hr { border-color: #1e2130; margin: 20px 0; }
+hr { border: none; border-top: 1px solid #1a1d2e; margin: 24px 0; }
 
-/* ── Status box ── */
-[data-testid="stStatus"] { border-radius: 8px; }
+/* ── Progress bar ── */
+.stProgress > div > div { border-radius: 6px; }
 
-/* ── Metric cards ── */
+/* ── Metric ── */
 [data-testid="stMetric"] {
-    background: #1a1d2e;
-    border-radius: 10px;
-    padding: 14px 18px;
-    border: 1px solid #1e2130;
+    background: #181b29;
+    border-radius: 12px;
+    padding: 16px 20px;
+    border: 1px solid #1f2235;
 }
+[data-testid="stMetricValue"] { font-size: 28px !important; font-weight: 800 !important; }
+[data-testid="stMetricLabel"] { font-size: 12px !important; color: #4a4f62 !important; text-transform: uppercase; letter-spacing: 1px; }
+
+/* ── Expander ── */
+[data-testid="stExpander"] {
+    background: #181b29;
+    border: 1px solid #1f2235;
+    border-radius: 10px;
+}
+
+/* ── Radio ── */
+.stRadio label { font-size: 14px !important; }
+
+/* ── Caption ── */
+.stCaption { color: #4a4f62 !important; font-size: 12px !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -139,32 +218,45 @@ hr { border-color: #1e2130; margin: 20px 0; }
 
 MITRE_PLAIN = {
     "T1566": "Attackers sent a deceptive message designed to trick the recipient into clicking a link or opening a file.",
-    "T1204": "The email contains an attachment that requires the user to open or run it — a common way to install malware.",
-    "T1059": "Evidence of scripting tools (like PowerShell) that attackers use to run commands and take control of a system.",
+    "T1204": "The email contains an attachment that requires the user to open or run it. This is a common way to install malware.",
+    "T1059": "Evidence of scripting tools like PowerShell that attackers use to run commands and take control of a system.",
     "T1547": "Attackers may be attempting to keep malware running every time the computer starts up.",
-    "T1056": "This looks like a credential harvesting attempt — designed to steal your username and password.",
+    "T1056": "This looks like a credential harvesting attempt designed to steal a username and password.",
     "T1583": "The domain or infrastructure used was newly set up, which is common when attackers prepare for a campaign.",
     "T1036": "The sender is disguising themselves as a trusted source to gain the recipient's trust.",
+    "T1027": "The content or files appear to be encoded or obfuscated to hide malicious intent from security tools.",
+    "T1003": "Indicators suggest an attempt to extract saved credentials from the operating system.",
+    "T1055": "Indicators suggest code may be injected into a running process to execute malicious actions.",
+    "T1486": "Patterns consistent with ransomware were detected. Files may be at risk of being encrypted.",
+    "T1070": "Evidence of attempts to delete logs or remove traces of malicious activity.",
+    "T1562": "Indicators suggest security tools such as antivirus or the firewall may have been disabled.",
+    "T1021": "Evidence of remote access tools being used to move laterally across systems.",
+    "T1053": "A scheduled task may have been created to run malicious code automatically.",
+    "T1105": "Indicators suggest tools or malware were downloaded from an external source.",
+    "T1218": "A trusted Windows system binary was used to run malicious code and bypass security controls.",
+    "T1082": "The attacker appears to be gathering information about the system and environment.",
+    "T1190": "A known software vulnerability was referenced that could allow an attacker to compromise a system.",
+    "T1078": "Indicators suggest legitimate account credentials may have been used or targeted by the attacker.",
 }
 
 SIGNAL_PLAIN = {
-    "sender_mismatch":        "The 'From' address and 'Reply-To' address belong to different domains — a classic phishing trick.",
-    "newly_registered_domain":"The domain was registered very recently. Attackers often register new domains right before launching a campaign.",
+    "sender_mismatch":        "The From address and Reply-To address belong to different domains. This is a classic phishing trick.",
+    "newly_registered_domain":"The domain was registered very recently. Attackers often register fresh domains right before launching a campaign.",
     "suspicious_url":         "A suspicious link was found in the content.",
     "vt_detections_3plus":    "Multiple cybersecurity companies flagged this as malicious.",
     "abuseipdb_score_50plus": "This IP address has been widely reported for malicious activity.",
     "urgency_language":       "The message uses high-pressure language to rush the recipient into acting without thinking.",
     "attachment_present":     "An attachment was found. Malicious files are commonly delivered as email attachments.",
-    "cve_cvss_7plus":         "A known critical vulnerability was referenced — attackers sometimes exploit these.",
+    "cve_cvss_7plus":         "A known critical vulnerability was referenced. Attackers sometimes exploit these against unpatched systems.",
     "mitre_technique_mapped": "Known attacker techniques were identified in this content.",
-    "spf_dkim_dmarc_fail":    "Email authentication checks failed — this email did not come from a legitimate server.",
+    "spf_dkim_dmarc_fail":    "Email authentication checks failed. This email did not come from a legitimate server.",
 }
 
 LEVEL_ADVICE = {
-    "Critical": "This content shows strong evidence of malicious activity. Do not click any links, open any attachments, or reply. Escalate to your security team immediately.",
-    "High":     "Multiple threat indicators were found. Treat this as likely malicious. Do not interact with any links or attachments. Report it.",
-    "Medium":   "Some suspicious patterns were detected. Proceed with caution. Do not click links unless you can independently verify the sender.",
-    "Low":      "Few or no threat indicators found. This appears relatively safe, but always verify unexpected emails with the sender directly.",
+    "Critical": "Strong evidence of malicious activity. Do not click any links, open attachments, or reply. Escalate to your security team immediately.",
+    "High":     "Multiple threat indicators found. Treat this as likely malicious. Do not interact with any links or attachments. Report it.",
+    "Medium":   "Some suspicious patterns detected. Proceed with caution and do not click links unless you can independently verify the sender.",
+    "Low":      "Few or no threat indicators found. This appears relatively safe, but always verify unexpected messages with the sender directly.",
 }
 
 def _cls(level): return {"Critical":"critical","High":"high","Medium":"medium","Low":"low"}.get(level,"low")
@@ -244,178 +336,202 @@ async def _single_lookup(value: str, ioc_type: str) -> dict:
 # ── Render: score ─────────────────────────────────────────────────────────────
 
 def _render_score(score_result: dict):
-    s = score_result["score"]
+    s     = score_result["score"]
     level = score_result["level"]
-    cls = _cls(level)
-    col = _col(s)
+    cls   = _cls(level)
+    col   = _col(s)
     advice = LEVEL_ADVICE[level]
 
     st.markdown(f"""
-    <div class="card {cls}" style="display:flex;gap:30px;align-items:flex-start;flex-wrap:wrap;">
-        <div>
-            <div class="label">Overall Risk Score</div>
-            <div class="big" style="color:{col};">{s}<span style="font-size:18px;color:#555;">/100</span></div>
-            <div style="font-size:20px;font-weight:700;color:{col};margin-top:4px;">{level} Risk</div>
-        </div>
-        <div style="flex:1;min-width:200px;border-left:1px solid #333;padding-left:20px;">
-            <div class="label">What this means</div>
-            <div class="plain">{advice}</div>
+    <div class="card {cls}">
+        <div style="display:flex; align-items:flex-start; gap:32px; flex-wrap:wrap;">
+            <div style="min-width:120px;">
+                <div class="label">Risk Score</div>
+                <div class="big" style="color:{col};">{s}<span style="font-size:20px; color:#2a2d3e; font-weight:400;">/100</span></div>
+                <div style="margin-top:10px;">
+                    <span class="badge {'b-red' if level=='Critical' else 'b-ora' if level=='High' else 'b-yel' if level=='Medium' else 'b-grn'}" style="font-size:13px; padding:5px 14px;">{level} Risk</span>
+                </div>
+                <div class="score-bar-track" style="width:120px;">
+                    <div class="score-bar-fill" style="width:{s}%; background:{col};"></div>
+                </div>
+            </div>
+            <div style="flex:1; min-width:200px; padding-left:32px; border-left:1px solid #1f2235;">
+                <div class="label">What this means</div>
+                <div class="plain" style="font-size:15px; color:#c9d1e0; margin-top:8px;">{advice}</div>
+            </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
 
 def _render_breakdown(score_result: dict):
-    st.markdown('<div class="section">How the score was calculated</div>', unsafe_allow_html=True)
-    st.markdown('<div class="plain" style="margin-bottom:12px;">Each item below contributed points to the overall risk score. Green items were not triggered.</div>', unsafe_allow_html=True)
-    for signal, pts in score_result["breakdown"].items():
-        plain = SIGNAL_PLAIN.get(signal, signal.replace("_"," ").title())
-        if pts > 0:
+    st.markdown('<div class="section">Score Breakdown</div>', unsafe_allow_html=True)
+    triggered = {k: v for k, v in score_result["breakdown"].items() if v > 0}
+    clean     = {k: v for k, v in score_result["breakdown"].items() if v == 0}
+
+    if triggered:
+        for signal, pts in triggered.items():
+            plain = SIGNAL_PLAIN.get(signal, signal.replace("_", " ").title())
             st.markdown(f"""
-            <div class="card high" style="padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px;">
-                <div>
-                    <div style="font-weight:600;font-size:14px;">⚠️ {signal.replace('_',' ').title()}</div>
-                    <div class="plain" style="margin-top:2px;">{plain}</div>
+            <div class="card high" style="padding:14px 20px; display:flex; justify-content:space-between; align-items:center; gap:16px;">
+                <div style="flex:1;">
+                    <div style="font-weight:600; font-size:14px; color:#e0e0e0;">{signal.replace('_',' ').title()}</div>
+                    <div class="plain" style="margin-top:3px; font-size:13px;">{plain}</div>
                 </div>
-                <div style="font-size:22px;font-weight:800;color:#ff8c00;min-width:48px;text-align:right;">+{pts}</div>
+                <div style="font-size:20px; font-weight:800; color:#f97316; min-width:42px; text-align:right;">+{pts}</div>
             </div>
             """, unsafe_allow_html=True)
-        else:
-            st.markdown(f"""
-            <div class="card" style="padding:8px 16px;display:flex;justify-content:space-between;align-items:center;opacity:0.35;">
-                <div style="font-size:13px;">✅ {signal.replace('_',' ').title()}</div>
-                <div style="font-size:14px;color:#555;">+0</div>
-            </div>
-            """, unsafe_allow_html=True)
+
+    if clean:
+        with st.expander(f"{len(clean)} signals not triggered"):
+            for signal in clean:
+                st.markdown(f'<div style="font-size:13px; color:#4a4f62; padding:4px 0;">{signal.replace("_"," ").title()}</div>', unsafe_allow_html=True)
 
 
 def _render_mitre(techniques: list):
-    st.markdown('<div class="section">Attack Techniques Identified</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section">MITRE ATT&CK Techniques</div>', unsafe_allow_html=True)
     if not techniques:
-        st.markdown('<div class="card" style="opacity:0.5;"><div class="plain">No known attack techniques were matched in this content.</div></div>', unsafe_allow_html=True)
+        st.markdown('<div class="card neutral"><div class="plain">No known attack techniques matched in this content.</div></div>', unsafe_allow_html=True)
         return
-    st.markdown('<div class="plain" style="margin-bottom:10px;">These are techniques from the MITRE ATT&CK framework — a globally recognized catalog of how real attackers operate. Finding these doesn\'t confirm an attack, but they are serious signals to investigate.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="plain" style="margin-bottom:14px; font-size:13px;">Techniques from the MITRE ATT&CK framework — a globally recognized catalog of real attacker behavior. These are investigative signals, not confirmed attacks.</div>', unsafe_allow_html=True)
     for t in techniques:
         plain = MITRE_PLAIN.get(t["id"], "A known attacker technique was detected.")
+        conf_cls = "b-red" if t["confidence"] == "high" else "b-yel" if t["confidence"] == "medium" else "b-gry"
         st.markdown(f"""
-        <div class="card medium" style="padding:12px 16px;">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                <div>
-                    <span class="mono" style="color:#ffd700;font-weight:700;">{t['id']}</span>
-                    <span style="color:#e0e0e0;margin-left:10px;font-weight:600;">{t['name']}</span>
+        <div class="card medium" style="padding:16px 20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span class="mono" style="color:#eab308; font-weight:700; font-size:14px;">{t['id']}</span>
+                    <span style="color:#e0e0e0; font-weight:600; font-size:14px;">{t['name']}</span>
                 </div>
-                <span class="badge {'b-red' if t['confidence']=='high' else 'b-yel' if t['confidence']=='medium' else 'b-gry'}">{t['confidence'].capitalize()} confidence</span>
+                <span class="badge {conf_cls}">{t['confidence'].capitalize()} confidence</span>
             </div>
-            <div class="plain" style="margin-top:6px;">{plain}</div>
-            <div style="margin-top:6px;"><a href="{t['url']}" target="_blank" style="font-size:12px;color:#3b82f6;">View full technique details on MITRE ATT&CK →</a></div>
+            <div class="plain" style="margin-top:10px; font-size:13px;">{plain}</div>
+            <div style="margin-top:10px;">
+                <a href="{t['url']}" target="_blank" style="font-size:12px; color:#3b82f6; text-decoration:none;">View on MITRE ATT&CK</a>
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
 
 def _render_iocs(parsed: dict):
-    st.markdown('<div class="section">Indicators of Compromise (IOCs)</div>', unsafe_allow_html=True)
-    st.markdown('<div class="plain" style="margin-bottom:10px;">These are the suspicious items extracted from the content. URLs and domains are shown in defanged format (with brackets) so they cannot be accidentally clicked.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section">Extracted Indicators (IOCs)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="plain" style="margin-bottom:14px; font-size:13px;">Suspicious items found in the content. URLs and domains are defanged (brackets added) so they cannot be accidentally clicked.</div>', unsafe_allow_html=True)
 
     iocs = parsed.get("iocs", {})
-    type_labels = {
-        "urls": "Links / URLs",
-        "domains": "Domains",
-        "ips": "IP Addresses",
-        "hashes": "File Hashes",
-        "cves": "Known Vulnerabilities (CVEs)",
-        "emails": "Email Addresses",
+    type_tags = {
+        "urls":    "URL",
+        "domains": "DOMAIN",
+        "ips":     "IP",
+        "hashes":  "HASH",
+        "cves":    "CVE",
+        "emails":  "EMAIL",
     }
     any_found = False
-    for key, label in type_labels.items():
+    for key, tag in type_tags.items():
         items = iocs.get(key, [])
         if not items:
             continue
         any_found = True
-        st.markdown(f'<div style="font-size:13px;color:#aaa;margin:8px 0 4px;">{label}</div>', unsafe_allow_html=True)
         for item in items:
             val = item.get("defanged", item.get("value", item)) if isinstance(item, dict) else item
-            st.markdown(f'<div class="ioc-row">{val}</div>', unsafe_allow_html=True)
-
-    if not any_found:
-        st.markdown('<div class="card" style="opacity:0.5;"><div class="plain">No indicators were extracted from this content.</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="ioc-row"><span class="type-tag">{tag}</span>{val}</div>', unsafe_allow_html=True)
 
     attachments = parsed.get("attachments", [])
     if attachments:
-        st.markdown('<div style="font-size:13px;color:#aaa;margin:8px 0 4px;">Attachments</div>', unsafe_allow_html=True)
         for a in attachments:
             danger = any(a.lower().endswith(ext) for ext in [".exe",".js",".vbs",".bat",".ps1",".hta",".docm",".xlsm",".zip",".rar"])
-            st.markdown(f'<div class="ioc-row" style="color:{"#ff4b4b" if danger else "#e0e0e0"};">{"⚠️ " if danger else ""}{a}{"  — Dangerous file type" if danger else ""}</div>', unsafe_allow_html=True)
+            warn = ' <span style="color:#ef4444; font-size:12px; font-weight:600;">Dangerous file type</span>' if danger else ""
+            st.markdown(f'<div class="ioc-row"><span class="type-tag">ATTACHMENT</span><span class="{"ioc-danger" if danger else ""}">{a}</span>{warn}</div>', unsafe_allow_html=True)
+        any_found = True
+
+    if not any_found:
+        st.markdown('<div class="card neutral"><div class="plain">No indicators were extracted from this content.</div></div>', unsafe_allow_html=True)
 
 
 def _render_enrichment(parsed: dict):
-    st.markdown('<div class="section">Threat Intelligence Results</div>', unsafe_allow_html=True)
-    st.markdown('<div class="plain" style="margin-bottom:10px;">These results come from real-time lookups against threat intelligence databases. They help determine whether the identified indicators are known to be malicious.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section">Threat Intelligence</div>', unsafe_allow_html=True)
 
-    vt  = [r for r in parsed.get("vt_results", [])    if not r.get("skipped")]
-    ab  = [r for r in parsed.get("abuse_results", []) if not r.get("skipped")]
-    wh  = parsed.get("whois_results", [])
-    nv  = [r for r in parsed.get("nvd_results", [])   if not r.get("skipped")]
-    mb  = [r for r in parsed.get("mb_results", [])    if not r.get("skipped")]
-    skipped = [r for r in parsed.get("vt_results", []) + parsed.get("abuse_results", []) + parsed.get("nvd_results", []) + parsed.get("mb_results", []) if r.get("skipped")]
+    vt  = [r for r in parsed.get("vt_results",    []) if not r.get("skipped")]
+    ab  = [r for r in parsed.get("abuse_results",  []) if not r.get("skipped")]
+    wh  =  parsed.get("whois_results", [])
+    nv  = [r for r in parsed.get("nvd_results",   []) if not r.get("skipped")]
+    mb  = [r for r in parsed.get("mb_results",    []) if not r.get("skipped")]
+    skipped = [r for r in
+               parsed.get("vt_results", []) + parsed.get("abuse_results", []) +
+               parsed.get("nvd_results", []) + parsed.get("mb_results", [])
+               if r.get("skipped")]
 
     if not any([vt, ab, wh, nv, mb]):
-        st.markdown('<div class="card info"><div class="plain">No threat intelligence results were returned. This could mean the indicators are unknown, or enrichment was skipped (offline mode or missing API keys).</div></div>', unsafe_allow_html=True)
+        st.markdown('<div class="card info"><div class="plain">No threat intelligence results returned. Indicators may be unknown, or enrichment was skipped due to offline mode or missing API keys.</div></div>', unsafe_allow_html=True)
+        return
 
     for r in vt:
-        mal = r.get("malicious", 0)
-        sus = r.get("suspicious", 0)
-        har = r.get("harmless", 0)
+        mal   = r.get("malicious",  0)
+        sus   = r.get("suspicious", 0)
+        har   = r.get("harmless",   0)
         total = mal + sus + har
-        cls = "critical" if mal >= 5 else "high" if mal >= 3 else "medium" if mal >= 1 else "clean"
-        if mal >= 5:
-            verdict = "Highly malicious — flagged by many security vendors."
-            verdict_col = "#ff4b4b"
-        elif mal >= 3:
-            verdict = "Likely malicious — flagged by multiple security vendors."
-            verdict_col = "#ff8c00"
-        elif mal >= 1:
-            verdict = "Possibly suspicious — flagged by at least one vendor. Investigate further."
-            verdict_col = "#ffd700"
-        else:
-            verdict = "No vendors flagged this as malicious. Appears clean."
-            verdict_col = "#21c55d"
+        cls   = "critical" if mal >= 5 else "high" if mal >= 3 else "medium" if mal >= 1 else "clean"
+        if mal >= 5:   verdict, vc = "Highly malicious. Flagged by many security vendors. Avoid all interaction.", "#ef4444"
+        elif mal >= 3: verdict, vc = "Likely malicious. Flagged by multiple vendors.", "#f97316"
+        elif mal >= 1: verdict, vc = "Possibly suspicious. Flagged by at least one vendor. Investigate further.", "#eab308"
+        else:          verdict, vc = "No vendors flagged this. Appears clean, though this does not guarantee safety.", "#22c55e"
         st.markdown(f"""
         <div class="card {cls}">
-            <div class="label">VirusTotal — {r.get('ioc','')}</div>
-            <div style="display:flex;gap:24px;margin:10px 0;flex-wrap:wrap;">
-                <div><div class="sub">Flagged malicious by</div><div style="font-size:28px;font-weight:800;color:#ff4b4b;">{mal}<span style="font-size:14px;color:#555;"> / {total} vendors</span></div></div>
-                <div><div class="sub">Suspicious</div><div style="font-size:22px;font-weight:700;color:#ff8c00;">{sus}</div></div>
-                <div><div class="sub">Clean</div><div style="font-size:22px;font-weight:700;color:#21c55d;">{har}</div></div>
+            <div class="label">VirusTotal</div>
+            <div class="mono" style="color:#9ca3af; margin-bottom:14px; font-size:12px;">{r.get('ioc','')}</div>
+            <div class="data-grid">
+                <div class="data-cell">
+                    <div class="sub">Flagged by</div>
+                    <div style="font-size:32px; font-weight:800; color:#ef4444; line-height:1;">{mal}</div>
+                    <div class="sub">of {total} vendors</div>
+                </div>
+                <div class="data-cell">
+                    <div class="sub">Suspicious</div>
+                    <div style="font-size:24px; font-weight:700; color:#f97316; line-height:1.2;">{sus}</div>
+                </div>
+                <div class="data-cell">
+                    <div class="sub">Clean</div>
+                    <div style="font-size:24px; font-weight:700; color:#22c55e; line-height:1.2;">{har}</div>
+                </div>
             </div>
-            <div style="color:{verdict_col};font-size:14px;font-weight:600;">→ {verdict}</div>
+            <div class="verdict" style="color:{vc};">{verdict}</div>
         </div>
         """, unsafe_allow_html=True)
 
     for r in ab:
-        conf = r.get("abuse_confidence", 0)
-        reports = r.get("total_reports", 0)
-        cls = "critical" if conf >= 75 else "high" if conf >= 50 else "medium" if conf >= 25 else "clean"
-        if conf >= 75:
-            verdict = f"This IP is widely known as malicious — {reports} separate abuse reports on record."
-        elif conf >= 50:
-            verdict = f"This IP has a high abuse score and has been reported {reports} times."
-        elif conf >= 25:
-            verdict = f"Some abuse reports exist for this IP ({reports} total). Treat with caution."
-        else:
-            verdict = f"Low abuse score. Only {reports} reports on record. Appears relatively safe."
+        conf    = r.get("abuse_confidence", 0)
+        reports = r.get("total_reports",    0)
+        cls     = "critical" if conf >= 75 else "high" if conf >= 50 else "medium" if conf >= 25 else "clean"
+        col     = "#ef4444" if conf >= 75 else "#f97316" if conf >= 50 else "#eab308" if conf >= 25 else "#22c55e"
+        if conf >= 75:   verdict = f"Widely known as malicious. Reported {reports} times by the security community."
+        elif conf >= 50: verdict = f"High abuse score. Reported {reports} times. Treat as malicious unless proven otherwise."
+        elif conf >= 25: verdict = f"Some abuse history. {reports} reports on record. Approach with caution."
+        else:            verdict = f"Low abuse history. Only {reports} reports. Appears relatively safe."
         st.markdown(f"""
         <div class="card {cls}">
-            <div class="label">AbuseIPDB — IP Reputation — {r.get('ioc','')}</div>
-            <div style="display:flex;gap:30px;margin:10px 0;align-items:center;flex-wrap:wrap;">
-                <div>
-                    <div class="sub">Abuse Confidence Score</div>
-                    <div class="big" style="color:{'#ff4b4b' if conf>=75 else '#ff8c00' if conf>=50 else '#ffd700' if conf>=25 else '#21c55d'};">{conf}%</div>
+            <div class="label">AbuseIPDB — IP Reputation</div>
+            <div class="mono" style="color:#9ca3af; margin-bottom:14px; font-size:12px;">{r.get('ioc','')}</div>
+            <div class="data-grid">
+                <div class="data-cell">
+                    <div class="sub">Abuse Confidence</div>
+                    <div style="font-size:36px; font-weight:800; color:{col}; line-height:1;">{conf}<span style="font-size:18px;">%</span></div>
+                    <div class="sub">0% clean / 100% malicious</div>
                 </div>
-                <div><div class="sub">Country</div><div style="font-size:16px;font-weight:600;">{r.get('country','?')}</div></div>
-                <div><div class="sub">ISP / Hosting</div><div style="font-size:14px;">{r.get('isp','unknown')}</div></div>
-                <div><div class="sub">Total Reports</div><div style="font-size:22px;font-weight:700;">{reports}</div></div>
+                <div class="data-cell">
+                    <div class="sub">Total Reports</div>
+                    <div style="font-size:24px; font-weight:700; color:#e0e0e0; line-height:1.2;">{reports}</div>
+                </div>
+                <div class="data-cell">
+                    <div class="sub">Country</div>
+                    <div class="value">{r.get('country','?')}</div>
+                </div>
+                <div class="data-cell">
+                    <div class="sub">ISP</div>
+                    <div class="value" style="font-size:13px;">{r.get('isp','unknown')}</div>
+                </div>
             </div>
-            <div style="font-size:14px;font-weight:600;color:{'#ff4b4b' if conf>=75 else '#ff8c00' if conf>=50 else '#aaa'};">→ {verdict}</div>
+            <div class="verdict" style="color:{col};">{verdict}</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -423,221 +539,266 @@ def _render_enrichment(parsed: dict):
         age = r.get("age_days")
         new = r.get("newly_registered", False)
         cls = "high" if new else "low"
-        age_str = f"{age} days old" if age is not None else "unknown"
-        if new:
-            verdict = f"⚠️ This domain was registered only {age} days ago. Newly created domains are a major red flag — attackers set them up just before launching attacks."
-        elif age and age < 180:
-            verdict = f"This domain is relatively new ({age} days old). Not necessarily malicious, but worth noting."
-        else:
-            verdict = f"This domain has been around for {age_str}. Older domains are generally more trustworthy."
+        age_str = f"{age} days" if age is not None else "unknown"
+        col = "#f97316" if new else "#22c55e"
+        if new:              verdict = f"Registered only {age} days ago. Newly created domains are a major red flag. Attackers often set them up right before launching a campaign."
+        elif age and age < 180: verdict = f"Relatively new domain at {age} days old. Not necessarily malicious, but worth noting."
+        else:                verdict = f"Established domain at {age_str}. Older domains are generally more trustworthy."
         st.markdown(f"""
         <div class="card {cls}">
-            <div class="label">WHOIS — Domain Age — {r.get('domain','')}</div>
-            <div style="display:flex;gap:30px;margin:10px 0;flex-wrap:wrap;">
-                <div><div class="sub">Registrar</div><div style="font-size:14px;">{r.get('registrar','unknown')}</div></div>
-                <div><div class="sub">Registered on</div><div style="font-size:14px;">{r.get('creation_date','unknown')}</div></div>
-                <div><div class="sub">Domain Age</div><div style="font-size:22px;font-weight:700;color:{'#ff8c00' if new else '#21c55d'};">{age_str}</div></div>
-                <div><div class="sub">Country</div><div style="font-size:14px;">{r.get('country','unknown')}</div></div>
+            <div class="label">WHOIS — Domain Registration</div>
+            <div class="mono" style="color:#9ca3af; margin-bottom:14px; font-size:12px;">{r.get('domain','')}</div>
+            <div class="data-grid">
+                <div class="data-cell">
+                    <div class="sub">Domain Age</div>
+                    <div style="font-size:24px; font-weight:700; color:{col}; line-height:1.2;">{age_str}</div>
+                </div>
+                <div class="data-cell">
+                    <div class="sub">Registered On</div>
+                    <div class="value" style="font-size:13px;">{r.get('creation_date','unknown')}</div>
+                </div>
+                <div class="data-cell">
+                    <div class="sub">Registrar</div>
+                    <div class="value" style="font-size:13px;">{r.get('registrar','unknown')}</div>
+                </div>
+                <div class="data-cell">
+                    <div class="sub">Country</div>
+                    <div class="value">{r.get('country','unknown')}</div>
+                </div>
             </div>
-            <div style="font-size:14px;font-weight:600;color:{'#ff8c00' if new else '#888'};">→ {verdict}</div>
+            <div class="verdict" style="color:{col};">{verdict}</div>
         </div>
         """, unsafe_allow_html=True)
 
     for r in nv:
         cvss = r.get("cvss_score", 0)
-        sev = r.get("severity", "unknown").capitalize()
-        cls = "critical" if cvss >= 9 else "high" if cvss >= 7 else "medium" if cvss >= 4 else "low"
-        if cvss >= 9:
-            verdict = "Critical severity vulnerability. Systems running unpatched software are at serious risk."
-        elif cvss >= 7:
-            verdict = "High severity vulnerability. This flaw can be exploited to compromise a system if left unpatched."
-        elif cvss >= 4:
-            verdict = "Medium severity. Not immediately critical, but should be patched."
-        else:
-            verdict = "Low severity vulnerability."
+        sev  = r.get("severity", "unknown").capitalize()
+        cls  = "critical" if cvss >= 9 else "high" if cvss >= 7 else "medium" if cvss >= 4 else "low"
+        col  = "#ef4444" if cvss >= 9 else "#f97316" if cvss >= 7 else "#eab308" if cvss >= 4 else "#22c55e"
+        if cvss >= 9:   verdict = "Critical severity. Unpatched systems are at serious risk of compromise."
+        elif cvss >= 7: verdict = "High severity. This vulnerability can be actively exploited. Patching is urgent."
+        elif cvss >= 4: verdict = "Medium severity. Should be patched but not an immediate emergency."
+        else:           verdict = "Low severity vulnerability."
         st.markdown(f"""
         <div class="card {cls}">
-            <div class="label">Known Vulnerability — {r.get('ioc','')}</div>
-            <div style="display:flex;gap:30px;margin:10px 0;align-items:flex-start;flex-wrap:wrap;">
-                <div>
-                    <div class="sub">CVSS Severity Score (0–10)</div>
-                    <div class="big" style="color:{'#ff4b4b' if cvss>=7 else '#ffd700'};">{cvss}</div>
-                    <div style="font-size:14px;color:#aaa;">{sev}</div>
+            <div class="label">NVD — Known Vulnerability</div>
+            <div class="mono" style="color:#9ca3af; margin-bottom:14px; font-size:12px;">{r.get('ioc','')}</div>
+            <div class="data-grid">
+                <div class="data-cell">
+                    <div class="sub">CVSS Score (0-10)</div>
+                    <div style="font-size:36px; font-weight:800; color:{col}; line-height:1;">{cvss}</div>
+                    <div class="sub">{sev}</div>
                 </div>
-                <div style="flex:1;">
-                    <div class="sub">What is this vulnerability?</div>
-                    <div style="font-size:13px;color:#ccc;margin-top:4px;">{r.get('description','No description available.')}</div>
+                <div class="data-cell" style="flex:2;">
+                    <div class="sub">Description</div>
+                    <div style="font-size:13px; color:#9ca3af; margin-top:4px; line-height:1.6;">{r.get('description','No description available.')}</div>
                 </div>
             </div>
-            <div style="font-size:14px;font-weight:600;color:{'#ff4b4b' if cvss>=7 else '#aaa'};">→ {verdict}</div>
+            <div class="verdict" style="color:{col};">{verdict}</div>
         </div>
         """, unsafe_allow_html=True)
 
     for r in mb:
         found = r.get("found", False)
-        cls = "critical" if found else "clean"
-        tags = ", ".join(r.get("tags", [])) or "none"
-        if found:
-            verdict = f"This file is in the MalwareBazaar database — classified as {r.get('signature','unknown')}. First seen {r.get('first_seen','?')}."
-        else:
-            verdict = "This file hash was not found in MalwareBazaar. It may be clean or simply not yet cataloged."
+        cls   = "critical" if found else "clean"
+        tags  = ", ".join(r.get("tags", [])) or "none"
+        col   = "#ef4444" if found else "#22c55e"
+        verdict = f"Found in MalwareBazaar. Classified as {r.get('signature','unknown')}. First seen {r.get('first_seen','?')}." if found else "Not found in MalwareBazaar. The file may be clean or not yet cataloged."
         st.markdown(f"""
         <div class="card {cls}">
-            <div class="label">MalwareBazaar — File Hash — {r.get('ioc','')[:32]}...</div>
-            <div style="display:flex;gap:24px;margin:10px 0;flex-wrap:wrap;">
-                <div><div class="sub">Known Malware</div><div style="font-size:22px;font-weight:700;color:{'#ff4b4b' if found else '#21c55d'};">{'YES' if found else 'NOT FOUND'}</div></div>
-                {"<div><div class='sub'>File Name</div><div style='font-size:13px;'>" + r.get('file_name','?') + "</div></div>" if found else ""}
-                {"<div><div class='sub'>Malware Family</div><div style='font-size:13px;'>" + r.get('signature','?') + "</div></div>" if found else ""}
-                {"<div><div class='sub'>File Type</div><div style='font-size:13px;'>" + r.get('file_type','?') + "</div></div>" if found else ""}
-                {"<div><div class='sub'>Tags</div><div style='font-size:13px;'>" + tags + "</div></div>" if found else ""}
+            <div class="label">MalwareBazaar — File Hash</div>
+            <div class="mono" style="color:#9ca3af; margin-bottom:14px; font-size:12px;">{r.get('ioc','')[:40]}...</div>
+            <div class="data-grid">
+                <div class="data-cell">
+                    <div class="sub">Known Malware</div>
+                    <div style="font-size:20px; font-weight:800; color:{col};">{"YES" if found else "NOT FOUND"}</div>
+                </div>
+                {"<div class='data-cell'><div class='sub'>Malware Family</div><div class='value'>" + r.get('signature','?') + "</div></div>" if found else ""}
+                {"<div class='data-cell'><div class='sub'>File Type</div><div class='value'>" + r.get('file_type','?') + "</div></div>" if found else ""}
+                {"<div class='data-cell'><div class='sub'>Tags</div><div class='value' style='font-size:13px;'>" + tags + "</div></div>" if found else ""}
             </div>
-            <div style="font-size:14px;font-weight:600;color:{'#ff4b4b' if found else '#888'};">→ {verdict}</div>
+            <div class="verdict" style="color:{col};">{verdict}</div>
         </div>
         """, unsafe_allow_html=True)
 
     if skipped:
         with st.expander(f"{len(skipped)} lookup(s) skipped"):
             for r in skipped:
-                st.caption(f"• {r.get('ioc','')} — {r.get('source','')} — {r.get('reason','')}")
+                st.caption(f"{r.get('source','')} / {r.get('ioc','')} — {r.get('reason','')}")
 
 
 def _render_report(report: dict):
-    st.markdown('<div class="section">Investigation Report</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section">AI Investigation Report</div>', unsafe_allow_html=True)
     summary = report.get("executive_summary", "")
     if summary:
-        st.markdown(f'<div class="card info"><div class="label">Summary</div><div class="plain" style="margin-top:6px;">{summary}</div></div>', unsafe_allow_html=True)
+        st.markdown(f"""
+        <div class="card info">
+            <div class="label">Summary</div>
+            <div style="font-size:15px; color:#c9d1e0; line-height:1.7; margin-top:8px;">{summary}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
     findings = report.get("technical_findings", [])
     if findings:
-        st.markdown('<div style="font-size:13px;color:#aaa;margin:10px 0 4px;">Technical Findings</div>', unsafe_allow_html=True)
+        st.markdown('<div class="sub" style="margin:16px 0 8px; font-size:12px; text-transform:uppercase; letter-spacing:1px;">Technical Findings</div>', unsafe_allow_html=True)
         for f in findings:
-            st.markdown(f'<div class="finding">🔍 {f}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="finding">{f}</div>', unsafe_allow_html=True)
 
     actions = report.get("recommended_actions", [])
     if actions:
-        st.markdown('<div style="font-size:13px;color:#aaa;margin:10px 0 4px;">Recommended Actions</div>', unsafe_allow_html=True)
+        st.markdown('<div class="sub" style="margin:16px 0 8px; font-size:12px; text-transform:uppercase; letter-spacing:1px;">Recommended Actions</div>', unsafe_allow_html=True)
         for a in actions:
-            st.markdown(f'<div class="action">✅ {a}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="action">{a}</div>', unsafe_allow_html=True)
 
     notes = report.get("analyst_notes", "")
     if notes:
-        st.markdown(f'<div class="card" style="margin-top:10px;opacity:0.7;"><div class="label">Analyst Notes</div><div class="plain">{notes}</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="card neutral" style="margin-top:12px;"><div class="label">Analyst Notes</div><div class="plain" style="font-size:13px;">{notes}</div></div>', unsafe_allow_html=True)
 
 
 def _render_ioc_lookup(result: dict):
-    ioc_type = result.get("type", "unknown")
-
     if result.get("error"):
         st.error(result["error"])
         return
 
     vt = result.get("vt", {})
     if vt and not vt.get("skipped"):
-        mal = vt.get("malicious", 0)
-        sus = vt.get("suspicious", 0)
-        har = vt.get("harmless", 0)
+        mal   = vt.get("malicious",  0)
+        sus   = vt.get("suspicious", 0)
+        har   = vt.get("harmless",   0)
         total = mal + sus + har
-        cls = "critical" if mal >= 5 else "high" if mal >= 3 else "medium" if mal >= 1 else "clean"
-        if mal >= 5:    verdict = "This is highly dangerous. Avoid any contact with this indicator."
-        elif mal >= 3:  verdict = "Multiple security vendors flagged this. Likely malicious."
-        elif mal >= 1:  verdict = "At least one vendor flagged this. Investigate before trusting it."
-        else:           verdict = "No vendors flagged this. It appears clean, but this doesn't guarantee safety."
+        cls   = "critical" if mal >= 5 else "high" if mal >= 3 else "medium" if mal >= 1 else "clean"
+        col   = "#ef4444" if mal >= 3 else "#eab308" if mal >= 1 else "#22c55e"
+        if mal >= 5:   verdict = "Highly dangerous. Multiple security vendors confirmed this as malicious."
+        elif mal >= 3: verdict = "Likely malicious. Flagged by multiple security vendors."
+        elif mal >= 1: verdict = "Possibly suspicious. Flagged by at least one vendor. Investigate before trusting."
+        else:          verdict = "No vendors flagged this. Appears clean, though this does not guarantee safety."
         st.markdown(f"""
         <div class="card {cls}">
-            <div class="label">VirusTotal Security Scan</div>
-            <div class="plain" style="margin-bottom:10px;">VirusTotal checks an indicator against 70+ antivirus and security companies simultaneously.</div>
-            <div style="display:flex;gap:30px;flex-wrap:wrap;margin-bottom:12px;">
-                <div><div class="sub">Flagged as malicious by</div><div style="font-size:36px;font-weight:800;color:#ff4b4b;">{mal}<span style="font-size:16px;color:#555;"> of {total} vendors</span></div></div>
-                <div><div class="sub">Suspicious</div><div style="font-size:26px;font-weight:700;color:#ff8c00;">{sus}</div></div>
-                <div><div class="sub">Clean / Safe</div><div style="font-size:26px;font-weight:700;color:#21c55d;">{har}</div></div>
+            <div class="label">VirusTotal</div>
+            <div class="sub" style="margin-bottom:14px;">Checks against 70+ antivirus and security vendors simultaneously.</div>
+            <div class="data-grid">
+                <div class="data-cell">
+                    <div class="sub">Flagged malicious by</div>
+                    <div style="font-size:40px; font-weight:800; color:#ef4444; line-height:1;">{mal}</div>
+                    <div class="sub">of {total} vendors</div>
+                </div>
+                <div class="data-cell">
+                    <div class="sub">Suspicious</div>
+                    <div style="font-size:28px; font-weight:700; color:#f97316; line-height:1.2;">{sus}</div>
+                </div>
+                <div class="data-cell">
+                    <div class="sub">Clean</div>
+                    <div style="font-size:28px; font-weight:700; color:#22c55e; line-height:1.2;">{har}</div>
+                </div>
             </div>
-            <div style="font-size:15px;font-weight:700;color:{'#ff4b4b' if mal>=3 else '#ffd700' if mal>=1 else '#21c55d'};">→ {verdict}</div>
+            <div class="verdict" style="color:{col};">{verdict}</div>
         </div>
         """, unsafe_allow_html=True)
     elif vt and vt.get("skipped"):
-        st.markdown(f'<div class="card info"><div class="label">VirusTotal</div><div class="plain">Lookup skipped: {vt.get("reason","")}</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="card neutral"><div class="label">VirusTotal</div><div class="plain">Skipped: {vt.get("reason","")}</div></div>', unsafe_allow_html=True)
 
     ab = result.get("abuseipdb", {})
     if ab and not ab.get("skipped"):
-        conf = ab.get("abuse_confidence", 0)
-        reports = ab.get("total_reports", 0)
-        cls = "critical" if conf >= 75 else "high" if conf >= 50 else "medium" if conf >= 25 else "clean"
-        if conf >= 75:  verdict = f"This IP is widely known as malicious. It has been reported {reports} times by the security community. Block it."
-        elif conf >= 50:verdict = f"High abuse score. Reported {reports} times. Treat as malicious unless proven otherwise."
-        elif conf >= 25:verdict = f"Some reports exist ({reports} total). Approach with caution."
-        else:           verdict = f"Low abuse history ({reports} reports). The IP appears relatively safe."
+        conf    = ab.get("abuse_confidence", 0)
+        reports = ab.get("total_reports",    0)
+        cls     = "critical" if conf >= 75 else "high" if conf >= 50 else "medium" if conf >= 25 else "clean"
+        col     = "#ef4444" if conf >= 75 else "#f97316" if conf >= 50 else "#eab308" if conf >= 25 else "#22c55e"
+        if conf >= 75:   verdict = f"Widely known as malicious. Reported {reports} times. Block this IP."
+        elif conf >= 50: verdict = f"High abuse score. Reported {reports} times. Treat as malicious."
+        elif conf >= 25: verdict = f"Some abuse history with {reports} reports. Approach with caution."
+        else:            verdict = f"Low abuse history with {reports} reports. Appears relatively safe."
         st.markdown(f"""
         <div class="card {cls}">
-            <div class="label">AbuseIPDB — IP Reputation Check</div>
-            <div class="plain" style="margin-bottom:10px;">AbuseIPDB is a community-driven database where security researchers report malicious IP addresses.</div>
-            <div style="display:flex;gap:30px;flex-wrap:wrap;margin-bottom:12px;">
-                <div>
-                    <div class="sub">Abuse Confidence Score</div>
-                    <div style="font-size:48px;font-weight:800;color:{'#ff4b4b' if conf>=75 else '#ff8c00' if conf>=50 else '#ffd700' if conf>=25 else '#21c55d'};">{conf}%</div>
-                    <div class="sub">0% = clean, 100% = confirmed malicious</div>
+            <div class="label">AbuseIPDB — IP Reputation</div>
+            <div class="sub" style="margin-bottom:14px;">Community-driven database of malicious IP addresses reported by security researchers.</div>
+            <div class="data-grid">
+                <div class="data-cell">
+                    <div class="sub">Abuse Confidence</div>
+                    <div style="font-size:44px; font-weight:800; color:{col}; line-height:1;">{conf}<span style="font-size:22px;">%</span></div>
+                    <div class="sub">0% clean / 100% malicious</div>
                 </div>
-                <div style="border-left:1px solid #333;padding-left:24px;">
-                    <div style="margin-bottom:10px;"><div class="sub">Total Abuse Reports</div><div style="font-size:22px;font-weight:700;">{reports}</div></div>
-                    <div style="margin-bottom:10px;"><div class="sub">ISP / Provider</div><div style="font-size:14px;">{ab.get('isp','unknown')}</div></div>
-                    <div style="margin-bottom:10px;"><div class="sub">Country</div><div style="font-size:14px;">{ab.get('country','unknown')}</div></div>
-                    <div><div class="sub">Whitelisted</div><div style="font-size:14px;">{"Yes" if ab.get('is_whitelisted') else "No"}</div></div>
+                <div class="data-cell">
+                    <div class="sub">Total Reports</div>
+                    <div style="font-size:28px; font-weight:700; color:#e0e0e0; line-height:1.2;">{reports}</div>
+                </div>
+                <div class="data-cell">
+                    <div class="sub">ISP</div>
+                    <div class="value" style="font-size:13px;">{ab.get('isp','unknown')}</div>
+                </div>
+                <div class="data-cell">
+                    <div class="sub">Country</div>
+                    <div class="value">{ab.get('country','unknown')}</div>
                 </div>
             </div>
-            <div style="font-size:15px;font-weight:700;color:{'#ff4b4b' if conf>=75 else '#ff8c00' if conf>=50 else '#aaa'};">→ {verdict}</div>
+            <div class="verdict" style="color:{col};">{verdict}</div>
         </div>
         """, unsafe_allow_html=True)
 
     wh = result.get("whois", {})
     if wh:
-        age = wh.get("age_days")
-        new = wh.get("newly_registered", False)
+        age     = wh.get("age_days")
+        new     = wh.get("newly_registered", False)
         age_str = f"{age} days" if age is not None else "unknown"
-        if new:         verdict = f"⚠️ Registered only {age} days ago — very suspicious. Fresh domains are a hallmark of phishing campaigns."
-        elif age and age < 180: verdict = f"Relatively new domain ({age} days). Worth noting but not automatically malicious."
-        else:           verdict = "This is an established domain. Older domains are generally more trustworthy."
+        col     = "#f97316" if new else "#22c55e"
+        if new:              verdict = f"Registered only {age} days ago. Newly created domains are a major red flag in phishing campaigns."
+        elif age and age < 180: verdict = f"Relatively new at {age} days. Not automatically malicious but worth noting."
+        else:                verdict = "Established domain. Older domains are generally more trustworthy."
         st.markdown(f"""
         <div class="card {'high' if new else 'low'}">
-            <div class="label">WHOIS — Domain Registration Info</div>
-            <div class="plain" style="margin-bottom:10px;">WHOIS records show when a domain was registered. Attackers often create new domains right before launching an attack.</div>
-            <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:12px;">
-                <div><div class="sub">Domain Age</div><div style="font-size:28px;font-weight:800;color:{'#ff8c00' if new else '#21c55d'};">{age_str}</div></div>
-                <div><div class="sub">Registered On</div><div style="font-size:14px;">{wh.get('creation_date','unknown')}</div></div>
-                <div><div class="sub">Registrar</div><div style="font-size:14px;">{wh.get('registrar','unknown')}</div></div>
-                <div><div class="sub">Country</div><div style="font-size:14px;">{wh.get('country','unknown')}</div></div>
+            <div class="label">WHOIS — Domain Registration</div>
+            <div class="sub" style="margin-bottom:14px;">Shows when the domain was first registered. Attackers often create fresh domains right before launching an attack.</div>
+            <div class="data-grid">
+                <div class="data-cell">
+                    <div class="sub">Domain Age</div>
+                    <div style="font-size:28px; font-weight:800; color:{col}; line-height:1.2;">{age_str}</div>
+                </div>
+                <div class="data-cell">
+                    <div class="sub">Registered On</div>
+                    <div class="value" style="font-size:13px;">{wh.get('creation_date','unknown')}</div>
+                </div>
+                <div class="data-cell">
+                    <div class="sub">Registrar</div>
+                    <div class="value" style="font-size:13px;">{wh.get('registrar','unknown')}</div>
+                </div>
+                <div class="data-cell">
+                    <div class="sub">Country</div>
+                    <div class="value">{wh.get('country','unknown')}</div>
+                </div>
             </div>
-            <div style="font-size:15px;font-weight:700;color:{'#ff8c00' if new else '#888'};">→ {verdict}</div>
+            <div class="verdict" style="color:{col};">{verdict}</div>
         </div>
         """, unsafe_allow_html=True)
 
     nvd_r = result.get("nvd", {})
     if nvd_r and not nvd_r.get("skipped"):
         cvss = nvd_r.get("cvss_score", 0)
-        sev = nvd_r.get("severity", "?").capitalize()
-        cls = "critical" if cvss >= 9 else "high" if cvss >= 7 else "medium" if cvss >= 4 else "low"
-        if cvss >= 9:   verdict = "Critical vulnerability. Any unpatched system is at serious risk. Patch immediately."
+        sev  = nvd_r.get("severity", "?").capitalize()
+        cls  = "critical" if cvss >= 9 else "high" if cvss >= 7 else "medium" if cvss >= 4 else "low"
+        col  = "#ef4444" if cvss >= 9 else "#f97316" if cvss >= 7 else "#eab308" if cvss >= 4 else "#22c55e"
+        if cvss >= 9:   verdict = "Critical severity. Unpatched systems are at serious risk. Patch immediately."
         elif cvss >= 7: verdict = "High severity. This flaw can be actively exploited. Patching is urgent."
         elif cvss >= 4: verdict = "Medium severity. Should be patched but not an immediate emergency."
         else:           verdict = "Low severity vulnerability."
         st.markdown(f"""
         <div class="card {cls}">
-            <div class="label">NVD — Known Vulnerability Database</div>
-            <div class="plain" style="margin-bottom:10px;">The National Vulnerability Database (NVD) tracks publicly known security flaws in software. Each one gets a score from 0–10 based on how dangerous it is.</div>
-            <div style="display:flex;gap:30px;flex-wrap:wrap;margin-bottom:12px;align-items:flex-start;">
-                <div>
-                    <div class="sub">Danger Score (CVSS)</div>
-                    <div style="font-size:48px;font-weight:800;color:{'#ff4b4b' if cvss>=7 else '#ffd700' if cvss>=4 else '#21c55d'};">{cvss}</div>
-                    <div class="sub">out of 10 — {sev}</div>
+            <div class="label">NVD — Known Vulnerability</div>
+            <div class="sub" style="margin-bottom:14px;">The National Vulnerability Database tracks publicly known security flaws. Scores range from 0 (low risk) to 10 (critical).</div>
+            <div class="data-grid">
+                <div class="data-cell">
+                    <div class="sub">CVSS Score</div>
+                    <div style="font-size:44px; font-weight:800; color:{col}; line-height:1;">{cvss}</div>
+                    <div class="sub">out of 10 / {sev}</div>
                 </div>
-                <div style="flex:1;border-left:1px solid #333;padding-left:24px;">
-                    <div class="sub">What is this vulnerability?</div>
-                    <div style="font-size:13px;color:#ccc;margin-top:6px;line-height:1.6;">{nvd_r.get('description','No description available.')}</div>
+                <div class="data-cell" style="flex:2;">
+                    <div class="sub">Description</div>
+                    <div style="font-size:13px; color:#9ca3af; margin-top:6px; line-height:1.6;">{nvd_r.get('description','No description available.')}</div>
                 </div>
             </div>
-            <div style="font-size:15px;font-weight:700;color:{'#ff4b4b' if cvss>=7 else '#aaa'};">→ {verdict}</div>
+            <div class="verdict" style="color:{col};">{verdict}</div>
         </div>
         """, unsafe_allow_html=True)
     elif nvd_r and nvd_r.get("skipped"):
-        st.markdown(f'<div class="card info"><div class="label">NVD</div><div class="plain">Lookup skipped: {nvd_r.get("reason","")}</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="card neutral"><div class="label">NVD</div><div class="plain">Skipped: {nvd_r.get("reason","")}</div></div>', unsafe_allow_html=True)
 
 
 def _build_md(parsed: dict, score_result: dict, techniques: list, report: dict) -> str:
@@ -673,9 +834,9 @@ def _render_header_visualizer(parsed: dict):
     st.markdown('<div class="plain" style="margin-bottom:10px;">Email headers reveal the true path a message took to reach you. Failures in authentication checks (SPF, DKIM, DMARC) are strong indicators the email is not from who it claims to be.</div>', unsafe_allow_html=True)
 
     def _auth_badge(name, val):
-        if val == "pass":   return f'<span class="badge b-grn">✅ {name}: PASS</span>'
-        if val == "fail":   return f'<span class="badge b-red">❌ {name}: FAIL</span>'
-        return f'<span class="badge b-gry">❓ {name}: {val.upper()}</span>'
+        if val == "pass": return f'<span class="badge b-grn">{name}: PASS</span>'
+        if val == "fail": return f'<span class="badge b-red">{name}: FAIL</span>'
+        return f'<span class="badge b-gry">{name}: {val.upper()}</span>'
 
     auth_html = _auth_badge("SPF", spf) + _auth_badge("DKIM", dkim) + _auth_badge("DMARC", dmarc)
     mismatch = parsed.get("sender_mismatch", False)
@@ -685,9 +846,9 @@ def _render_header_visualizer(parsed: dict):
         <div class="label">Authentication Results</div>
         <div style="margin:10px 0;">{auth_html}</div>
         <div class="plain">
-            {'⚠️ All three authentication checks failed — this email almost certainly did not come from a legitimate server.' if spf=='fail' and dkim=='fail' and dmarc=='fail'
-             else '⚠️ One or more authentication checks failed — treat this email with suspicion.' if 'fail' in [spf,dkim,dmarc]
-             else '✅ Authentication checks passed.'}
+            {'All three authentication checks failed. This email almost certainly did not come from a legitimate server.' if spf=='fail' and dkim=='fail' and dmarc=='fail'
+             else 'One or more authentication checks failed. Treat this email with suspicion.' if 'fail' in [spf,dkim,dmarc]
+             else 'Authentication checks passed.'}
         </div>
     </div>
     """, unsafe_allow_html=True)
