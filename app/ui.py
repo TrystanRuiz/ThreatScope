@@ -24,32 +24,113 @@ st.set_page_config(page_title="ThreatScope", page_icon="🛡️", layout="wide")
 
 st.markdown("""
 <style>
-.card { background:#1e2130; border-radius:10px; padding:18px 22px; margin-bottom:12px; border-left:4px solid #444; }
-.card.critical { border-left-color:#ff4b4b; }
-.card.high     { border-left-color:#ff8c00; }
-.card.medium   { border-left-color:#ffd700; }
-.card.low      { border-left-color:#21c55d; }
-.card.clean    { border-left-color:#21c55d; }
-.card.info     { border-left-color:#3b82f6; }
+/* ── Layout ── */
+.block-container { max-width: 1100px; padding-top: 2rem; padding-bottom: 3rem; }
 
-.label  { font-size:11px; color:#888; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
-.big    { font-size:38px; font-weight:800; line-height:1; }
-.plain  { font-size:14px; color:#ccc; line-height:1.6; margin-top:6px; }
-.sub    { font-size:12px; color:#777; margin-top:2px; }
-.mono   { font-family:monospace; font-size:13px; }
+/* ── Page header ── */
+.page-header { margin-bottom: 6px; }
+.page-header h1 { font-size: 28px; font-weight: 700; color: #f0f0f0; margin: 0; }
+.page-header p  { font-size: 14px; color: #777; margin: 4px 0 0 0; }
 
-.badge  { display:inline-block; padding:3px 10px; border-radius:12px; font-size:12px; font-weight:600; margin:2px; }
-.b-red  { background:#ff4b4b22; color:#ff4b4b; border:1px solid #ff4b4b55; }
-.b-ora  { background:#ff8c0022; color:#ff8c00; border:1px solid #ff8c0055; }
-.b-yel  { background:#ffd70022; color:#ffd700; border:1px solid #ffd70055; }
-.b-grn  { background:#21c55d22; color:#21c55d; border:1px solid #21c55d55; }
-.b-blu  { background:#3b82f622; color:#3b82f6; border:1px solid #3b82f655; }
-.b-gry  { background:#44444422; color:#aaa;    border:1px solid #44444455; }
+/* ── Cards ── */
+.card {
+    background: #1a1d2e;
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin-bottom: 10px;
+    border-left: 4px solid #2a2d3e;
+    transition: border-left-color 0.2s;
+}
+.card.critical { border-left-color: #ff4b4b; }
+.card.high     { border-left-color: #ff8c00; }
+.card.medium   { border-left-color: #ffd700; }
+.card.low      { border-left-color: #21c55d; }
+.card.clean    { border-left-color: #21c55d; }
+.card.info     { border-left-color: #3b82f6; }
 
-.ioc-row { background:#161929; border-radius:6px; padding:8px 14px; margin:3px 0; font-family:monospace; font-size:13px; }
-.finding { background:#1e2130; border-radius:6px; padding:10px 14px; margin:4px 0; border-left:3px solid #3b82f6; font-size:14px; }
-.action  { background:#1a2b1e; border-radius:6px; padding:10px 14px; margin:4px 0; border-left:3px solid #21c55d; font-size:14px; }
-.section { font-size:15px; font-weight:600; color:#ddd; margin:22px 0 10px; padding-bottom:6px; border-bottom:1px solid #2a2d3e; }
+/* ── Typography ── */
+.label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 6px; }
+.big   { font-size: 38px; font-weight: 800; line-height: 1; }
+.plain { font-size: 14px; color: #bbb; line-height: 1.65; margin-top: 6px; }
+.sub   { font-size: 12px; color: #666; margin-top: 2px; }
+.mono  { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; }
+
+/* ── Badges ── */
+.badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; margin: 2px; letter-spacing: 0.3px; }
+.b-red { background: #ff4b4b18; color: #ff4b4b; border: 1px solid #ff4b4b44; }
+.b-ora { background: #ff8c0018; color: #ff8c00; border: 1px solid #ff8c0044; }
+.b-yel { background: #ffd70018; color: #ffd700; border: 1px solid #ffd70044; }
+.b-grn { background: #21c55d18; color: #21c55d; border: 1px solid #21c55d44; }
+.b-blu { background: #3b82f618; color: #3b82f6; border: 1px solid #3b82f644; }
+.b-gry { background: #44444418; color: #888;    border: 1px solid #44444444; }
+
+/* ── IOC rows ── */
+.ioc-row {
+    background: #12141f;
+    border-radius: 6px;
+    padding: 9px 14px;
+    margin: 3px 0;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    color: #d0d0d0;
+    border: 1px solid #1e2130;
+}
+
+/* ── Finding / Action items ── */
+.finding { background: #1a1d2e; border-radius: 6px; padding: 10px 16px; margin: 5px 0; border-left: 3px solid #3b82f6; font-size: 14px; color: #ccc; line-height: 1.5; }
+.action  { background: #141f19; border-radius: 6px; padding: 10px 16px; margin: 5px 0; border-left: 3px solid #21c55d; font-size: 14px; color: #ccc; line-height: 1.5; }
+
+/* ── Section dividers ── */
+.section {
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 28px 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #1e2130;
+}
+
+/* ── Sidebar ── */
+[data-testid="stSidebar"] {
+    background: #12141f;
+    border-right: 1px solid #1e2130;
+}
+[data-testid="stSidebar"] .stSelectbox label { color: #888; font-size: 12px; }
+
+/* ── Buttons ── */
+.stButton > button {
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 8px 20px;
+    transition: opacity 0.15s;
+}
+.stButton > button:hover { opacity: 0.85; }
+
+/* ── Inputs ── */
+.stTextArea textarea, .stTextInput input {
+    background: #12141f;
+    border: 1px solid #2a2d3e;
+    border-radius: 8px;
+    color: #e0e0e0;
+    font-size: 14px;
+}
+
+/* ── Divider ── */
+hr { border-color: #1e2130; margin: 20px 0; }
+
+/* ── Status box ── */
+[data-testid="stStatus"] { border-radius: 8px; }
+
+/* ── Metric cards ── */
+[data-testid="stMetric"] {
+    background: #1a1d2e;
+    border-radius: 10px;
+    padding: 14px 18px;
+    border: 1px solid #1e2130;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -670,10 +751,14 @@ def _pdf_download_button(md_content: str, filename: str):
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 
 with st.sidebar:
-    st.markdown("## 🛡️ ThreatScope")
-    st.markdown("Local-first security triage tool")
-    st.markdown("---")
-    page = st.selectbox("Navigation", [
+    st.markdown("""
+    <div style="padding: 10px 0 20px 0;">
+        <div style="font-size:22px; font-weight:800; color:#f0f0f0; letter-spacing:-0.5px;">ThreatScope</div>
+        <div style="font-size:12px; color:#555; margin-top:2px;">Local-first security triage</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    page = st.selectbox("", [
         "Dashboard",
         "Email Analyzer",
         "Batch Analysis",
@@ -681,21 +766,32 @@ with st.sidebar:
         "Alert Triage",
         "Reports",
         "Settings",
-    ])
-    st.markdown("---")
-    st.caption(f"Model: `{config.OLLAMA_MODEL}`")
-    st.caption(f"VT: {'✅ Connected' if config.VT_API_KEY else '❌ No key'}")
-    st.caption(f"AbuseIPDB: {'✅ Connected' if config.ABUSEIPDB_API_KEY else '❌ No key'}")
-    st.caption(f"NVD: {'✅ Set' if config.NVD_API_KEY else '⚠️ No key (optional)'}")
-    st.caption(f"MalwareBazaar: {'✅ Connected' if config.MB_API_KEY else '⚠️ No key (optional)'}")
-    st.markdown("---")
-    st.caption("⚠️ All findings require human review before taking action.")
+    ], label_visibility="collapsed")
+
+    st.markdown("<div style='margin-top:24px;'></div>", unsafe_allow_html=True)
+
+    def _status_dot(ok): return f"<span style='color:{'#21c55d' if ok else '#ff4b4b'};'>{'●' if ok else '●'}</span>"
+
+    st.markdown(f"""
+    <div style="font-size:12px; color:#555; margin-bottom:8px; text-transform:uppercase; letter-spacing:1px;">Integrations</div>
+    <div style="font-size:13px; line-height:2; color:#888;">
+        {_status_dot(bool(config.VT_API_KEY))} VirusTotal<br>
+        {_status_dot(bool(config.ABUSEIPDB_API_KEY))} AbuseIPDB<br>
+        {_status_dot(bool(config.MB_API_KEY))} MalwareBazaar<br>
+        {_status_dot(bool(config.NVD_API_KEY))} NVD
+    </div>
+    <div style="margin-top:16px; font-size:12px; color:#555; line-height:1.6;">
+        Model: <span style="color:#888;">{config.OLLAMA_MODEL}</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<div style='margin-top:auto; padding-top:40px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#444; line-height:1.6;'>All findings require human review before taking action.</div>", unsafe_allow_html=True)
 
 
 # ── Dashboard ────────────────────────────────────────────────────────────────
 if page == "Dashboard":
-    st.title("Dashboard")
-    st.markdown("Overview of all analyses run with ThreatScope.")
+    st.markdown('<div class="page-header"><h1>Dashboard</h1><p>Overview of all analyses run with ThreatScope.</p></div>', unsafe_allow_html=True)
     st.markdown("---")
 
     reports = sorted(REPORTS_DIR.glob("*.md"), reverse=True)
@@ -759,8 +855,7 @@ if page == "Dashboard":
 
 # ── Batch Analysis ────────────────────────────────────────────────────────────
 elif page == "Batch Analysis":
-    st.title("Batch Email Analysis")
-    st.markdown("Upload multiple `.eml` files at once. ThreatScope will analyze each one and give you a summary table of all results.")
+    st.markdown('<div class="page-header"><h1>Batch Analysis</h1><p>Upload multiple .eml files at once and get a full results summary.</p></div>', unsafe_allow_html=True)
     st.markdown("---")
 
     uploaded_files = st.file_uploader(
@@ -816,8 +911,7 @@ elif page == "Batch Analysis":
 
 # ── Email Analyzer ────────────────────────────────────────────────────────────
 elif page == "Email Analyzer":
-    st.title("Email Analyzer")
-    st.markdown("Paste a suspicious email below. The tool will extract any links, attachments, and sender details, check them against threat intelligence databases, and generate a plain-English security report.")
+    st.markdown('<div class="page-header"><h1>Email Analyzer</h1><p>Paste a suspicious email to extract IOCs, check threat intelligence, and generate a security report.</p></div>', unsafe_allow_html=True)
     st.markdown("---")
 
     # Initialize session state for email content
@@ -886,8 +980,7 @@ elif page == "Email Analyzer":
 
 # ── IOC Lookup ────────────────────────────────────────────────────────────────
 elif page == "IOC Lookup":
-    st.title("IOC Lookup")
-    st.markdown("Enter a suspicious IP address, website, link, file hash, or vulnerability ID to check it against threat intelligence databases.")
+    st.markdown('<div class="page-header"><h1>IOC Lookup</h1><p>Check an IP address, domain, URL, file hash, or CVE against threat intelligence databases.</p></div>', unsafe_allow_html=True)
     st.markdown("---")
 
     col1, col2 = st.columns([3, 1])
@@ -916,8 +1009,7 @@ elif page == "IOC Lookup":
 
 # ── Alert Triage ──────────────────────────────────────────────────────────────
 elif page == "Alert Triage":
-    st.title("Alert Triage")
-    st.markdown("Paste a security alert or log entry here. The tool will extract any suspicious indicators, check them against threat databases, and tell you what to do next.")
+    st.markdown('<div class="page-header"><h1>Alert Triage</h1><p>Paste a SIEM alert or log entry to extract indicators, score risk, and get recommended actions.</p></div>', unsafe_allow_html=True)
     st.markdown("---")
 
     log_input = st.text_area("Alert or log content", height=250,
@@ -956,8 +1048,7 @@ elif page == "Alert Triage":
 
 # ── Reports ───────────────────────────────────────────────────────────────────
 elif page == "Reports":
-    st.title("Saved Reports")
-    st.markdown("Every analysis you run is automatically saved here as a Markdown file you can download.")
+    st.markdown('<div class="page-header"><h1>Saved Reports</h1><p>Every analysis is automatically saved here as a Markdown file you can download or export as PDF.</p></div>', unsafe_allow_html=True)
     st.markdown("---")
 
     reports = sorted(REPORTS_DIR.glob("*.md"), reverse=True)
@@ -975,7 +1066,7 @@ elif page == "Reports":
 
 # ── Settings ──────────────────────────────────────────────────────────────────
 elif page == "Settings":
-    st.title("Settings")
+    st.markdown('<div class="page-header"><h1>Settings</h1><p>Edit the .env file in your project folder and restart the app to apply changes.</p></div>', unsafe_allow_html=True)
     st.markdown("---")
     st.info("To change settings, open the `.env` file in your project folder and restart the app.")
 

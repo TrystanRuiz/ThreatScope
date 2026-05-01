@@ -3,6 +3,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Help weasyprint find Homebrew-installed system libraries on macOS
+if os.path.exists("/opt/homebrew/lib"):
+    _current = os.environ.get("DYLD_LIBRARY_PATH", "")
+    os.environ["DYLD_LIBRARY_PATH"] = f"/opt/homebrew/lib:{_current}" if _current else "/opt/homebrew/lib"
+
 class Config:
     OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.1:8b")
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
