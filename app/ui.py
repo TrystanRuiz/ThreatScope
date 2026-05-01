@@ -881,11 +881,19 @@ def _render_header_visualizer(parsed: dict):
 def _save_report(parsed: dict, score_result: dict, techniques: list, report: dict):
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     subject = parsed.get("subject", "alert")[:40].replace("/", "-")
-    md_content = _build_md(parsed, score_result, techniques, report)
-    filename = REPORTS_DIR / f"{ts}_{subject}.md"
-    filename.write_text(md_content)
+    stem = f"{ts}_{subject}"
 
-    st.success(f"Report saved: `{filename.name}`")
+    md_content = _build_md(parsed, score_result, techniques, report)
+    (REPORTS_DIR / f"{stem}.md").write_text(md_content)
+
+    try:
+        from weasyprint import HTML
+        pdf_bytes = HTML(string=_build_pdf_html(parsed, score_result, techniques, report)).write_pdf()
+        (REPORTS_DIR / f"{stem}.pdf").write_bytes(pdf_bytes)
+    except Exception:
+        pass
+
+    st.success(f"Report saved: `{stem}.md`")
 
 def _build_pdf_html(parsed: dict, score_result: dict, techniques: list, report: dict) -> str:  # noqa: C901
     s       = score_result["score"]
@@ -1574,20 +1582,127 @@ elif page == "Alert Triage":
 
 # ── Reports ───────────────────────────────────────────────────────────────────
 elif page == "Reports":
-    st.markdown('<div class="page-header"><h1>Saved Reports</h1><p>Every analysis is automatically saved here as a Markdown file you can download or export as PDF.</p></div>', unsafe_allow_html=True)
+    import re as _re
+    import zipfile
+    import io
+
+    st.markdown('<div class="page-header"><h1>Saved Reports</h1><p>All analyses saved automatically. Download as Markdown or PDF, search, filter, and manage your history.</p></div>', unsafe_allow_html=True)
     st.markdown("---")
 
-    reports = sorted(REPORTS_DIR.glob("*.md"), reverse=True)
-    if not reports:
+    all_reports = sorted(REPORTS_DIR.glob("*.md"), reverse=True)
+
+    def _parse_report_meta(r):
+        text = r.read_text()
+        s_match  = _re.search(r"\*\*Risk Score:\*\* (\d+)/100 \((\w+)\)", text)
+        dt_match = _re.search(r"\*\*Date:\*\* ([\d\-T:\.]+)", text)
+        subj = _re.sub(r"^\d{8}_\d{6}_", "", r.stem)
+        score = int(s_match.group(1)) if s_match else 0
+        level = s_match.group(2) if s_match else "Unknown"
+        date  = dt_match.group(1)[:16].replace("T", " ") if dt_match else datetime.fromtimestamp(r.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
+        return {"path": r, "stem": r.stem, "subject": subj, "score": score, "level": level, "date": date, "text": text}
+
+    if not all_reports:
         st.info("No reports yet. Run an analysis on the Email Analyzer or Alert Triage page to generate one.")
     else:
-        st.caption(f"{len(reports)} report(s) saved")
-        for r in reports:
-            mtime = datetime.fromtimestamp(r.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
-            with st.expander(f"{r.stem}  ·  {mtime}"):
-                st.markdown(r.read_text())
-                with open(r, "rb") as f:
-                    st.download_button("Download .md", f, file_name=r.name, key=r.name)
+        reports_meta = [_parse_report_meta(r) for r in all_reports]
+
+        # ── Stats header ──
+        total    = len(reports_meta)
+        critical = sum(1 for r in reports_meta if r["level"] == "Critical")
+        high     = sum(1 for r in reports_meta if r["level"] == "High")
+        medium   = sum(1 for r in reports_meta if r["level"] == "Medium")
+        low      = sum(1 for r in reports_meta if r["level"] == "Low")
+        avg      = round(sum(r["score"] for r in reports_meta) / total, 1)
+
+        c1, c2, c3, c4, c5, c6 = st.columns(6)
+        c1.metric("Total", total)
+        c2.metric("Avg Score", avg)
+        c3.metric("Critical", critical)
+        c4.metric("High", high)
+        c5.metric("Medium", medium)
+        c6.metric("Low", low)
+
+        st.markdown("---")
+
+        # ── Controls: search + filter + sort + export ──
+        ctrl1, ctrl2, ctrl3, ctrl4 = st.columns([3, 1.5, 1.5, 1.5])
+        with ctrl1:
+            search = st.text_input("Search reports", placeholder="Search by subject or keyword...", label_visibility="collapsed")
+        with ctrl2:
+            level_filter = st.selectbox("Risk level", ["All", "Critical", "High", "Medium", "Low"], label_visibility="collapsed")
+        with ctrl3:
+            sort_by = st.selectbox("Sort by", ["Newest first", "Oldest first", "Highest score", "Lowest score"], label_visibility="collapsed")
+        with ctrl4:
+            if st.button("Export all as .zip", use_container_width=True):
+                buf = io.BytesIO()
+                with zipfile.ZipFile(buf, "w") as zf:
+                    for r in all_reports:
+                        zf.write(r, r.name)
+                        pdf_path = r.with_suffix(".pdf")
+                        if pdf_path.exists():
+                            zf.write(pdf_path, pdf_path.name)
+                buf.seek(0)
+                st.download_button("Download zip", buf, file_name="threatscope_reports.zip", mime="application/zip", key="zip_dl")
+
+        # ── Apply filters ──
+        filtered = reports_meta
+        if search:
+            q = search.lower()
+            filtered = [r for r in filtered if q in r["subject"].lower() or q in r["text"].lower()]
+        if level_filter != "All":
+            filtered = [r for r in filtered if r["level"] == level_filter]
+        if sort_by == "Oldest first":
+            filtered = list(reversed(filtered))
+        elif sort_by == "Highest score":
+            filtered = sorted(filtered, key=lambda x: x["score"], reverse=True)
+        elif sort_by == "Lowest score":
+            filtered = sorted(filtered, key=lambda x: x["score"])
+
+        st.caption(f"Showing {len(filtered)} of {total} report(s)")
+        st.markdown("---")
+
+        if not filtered:
+            st.info("No reports match your search or filter.")
+
+        level_col = {"Critical":"#ef4444","High":"#f97316","Medium":"#eab308","Low":"#22c55e","Unknown":"#6b7280"}
+
+        for meta in filtered:
+            col  = level_col.get(meta["level"], "#6b7280")
+            r    = meta["path"]
+            pdf_path = r.with_suffix(".pdf")
+
+            # Summary card header
+            st.markdown(f"""
+            <div class="card" style="padding:12px 18px; display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <div>
+                    <div style="font-size:14px; font-weight:600; color:#e0e0e0;">{meta['subject'][:70]}</div>
+                    <div class="sub" style="margin-top:3px;">{meta['date']}</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:26px; font-weight:800; color:{col}; line-height:1;">{meta['score']}<span style="font-size:12px; color:#444;">/100</span></div>
+                    <div style="font-size:12px; color:{col}; font-weight:600;">{meta['level']}</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            with st.expander("View full report"):
+                st.markdown(meta["text"])
+                st.markdown("---")
+                btn1, btn2, btn3 = st.columns([1, 1, 4])
+                with btn1:
+                    with open(r, "rb") as f:
+                        st.download_button("Download .md", f, file_name=r.name, key=f"md_{r.stem}")
+                with btn2:
+                    if pdf_path.exists():
+                        with open(pdf_path, "rb") as f:
+                            st.download_button("Download PDF", f, file_name=pdf_path.name, key=f"pdf_{r.stem}", mime="application/pdf")
+                    else:
+                        st.caption("PDF not available for this report")
+                with btn3:
+                    if st.button("Delete", key=f"del_{r.stem}", type="secondary"):
+                        r.unlink(missing_ok=True)
+                        pdf_path.unlink(missing_ok=True)
+                        st.rerun()
 
 
 # ── Settings ──────────────────────────────────────────────────────────────────
