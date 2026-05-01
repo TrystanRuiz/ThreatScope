@@ -8,8 +8,9 @@ import streamlit as st
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.parsers.email_parser import parse_raw_email
+from app.parsers.header_parser import parse_headers
 from app.parsers.log_parser import parse_log
-from app.enrichers import virustotal, abuseipdb, nvd, whois_lookup
+from app.enrichers import virustotal, abuseipdb, nvd, whois_lookup, malwarebazaar
 from app.agents.scoring_agent import score
 from app.agents.mitre_agent import map_techniques
 from app.agents.analyst_agent import generate_report
@@ -94,7 +95,7 @@ def _badge(text, color): return f'<span class="badge b-{color}">{text}</span>'
 
 async def _enrich(parsed: dict) -> dict:
     iocs = parsed.get("iocs", {})
-    vt_res, ab_res, nvd_res, wh_res = [], [], [], []
+    vt_res, ab_res, nvd_res, wh_res, mb_res = [], [], [], [], []
     seen: set = set()
 
     for obj in iocs.get("ips", []):
@@ -122,7 +123,14 @@ async def _enrich(parsed: dict) -> dict:
             seen.add(cve)
             nvd_res.append(await nvd.lookup_cve(cve))
 
-    return {"vt_results": vt_res, "abuse_results": ab_res, "nvd_results": nvd_res, "whois_results": wh_res}
+    for obj in iocs.get("hashes", []):
+        h = obj["value"] if isinstance(obj, dict) else obj
+        if h not in seen:
+            seen.add(h)
+            mb_res.append(await malwarebazaar.lookup_hash(h))
+            vt_res.append(await virustotal.lookup_hash(h))
+
+    return {"vt_results": vt_res, "abuse_results": ab_res, "nvd_results": nvd_res, "whois_results": wh_res, "mb_results": mb_res}
 
 
 def _run_full_analysis(parsed: dict) -> tuple:
@@ -215,7 +223,7 @@ def _render_mitre(techniques: list):
                     <span class="mono" style="color:#ffd700;font-weight:700;">{t['id']}</span>
                     <span style="color:#e0e0e0;margin-left:10px;font-weight:600;">{t['name']}</span>
                 </div>
-                <span class="badge b-yel">Medium confidence</span>
+                <span class="badge {'b-red' if t['confidence']=='high' else 'b-yel' if t['confidence']=='medium' else 'b-gry'}">{t['confidence'].capitalize()} confidence</span>
             </div>
             <div class="plain" style="margin-top:6px;">{plain}</div>
             <div style="margin-top:6px;"><a href="{t['url']}" target="_blank" style="font-size:12px;color:#3b82f6;">View full technique details on MITRE ATT&CK →</a></div>
@@ -266,9 +274,10 @@ def _render_enrichment(parsed: dict):
     ab  = [r for r in parsed.get("abuse_results", []) if not r.get("skipped")]
     wh  = parsed.get("whois_results", [])
     nv  = [r for r in parsed.get("nvd_results", [])   if not r.get("skipped")]
-    skipped = [r for r in parsed.get("vt_results", []) + parsed.get("abuse_results", []) + parsed.get("nvd_results", []) if r.get("skipped")]
+    mb  = [r for r in parsed.get("mb_results", [])    if not r.get("skipped")]
+    skipped = [r for r in parsed.get("vt_results", []) + parsed.get("abuse_results", []) + parsed.get("nvd_results", []) + parsed.get("mb_results", []) if r.get("skipped")]
 
-    if not any([vt, ab, wh, nv]):
+    if not any([vt, ab, wh, nv, mb]):
         st.markdown('<div class="card info"><div class="plain">No threat intelligence results were returned. This could mean the indicators are unknown, or enrichment was skipped (offline mode or missing API keys).</div></div>', unsafe_allow_html=True)
 
     for r in vt:
@@ -380,6 +389,28 @@ def _render_enrichment(parsed: dict):
                 </div>
             </div>
             <div style="font-size:14px;font-weight:600;color:{'#ff4b4b' if cvss>=7 else '#aaa'};">→ {verdict}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    for r in mb:
+        found = r.get("found", False)
+        cls = "critical" if found else "clean"
+        tags = ", ".join(r.get("tags", [])) or "none"
+        if found:
+            verdict = f"This file is in the MalwareBazaar database — classified as {r.get('signature','unknown')}. First seen {r.get('first_seen','?')}."
+        else:
+            verdict = "This file hash was not found in MalwareBazaar. It may be clean or simply not yet cataloged."
+        st.markdown(f"""
+        <div class="card {cls}">
+            <div class="label">MalwareBazaar — File Hash — {r.get('ioc','')[:32]}...</div>
+            <div style="display:flex;gap:24px;margin:10px 0;flex-wrap:wrap;">
+                <div><div class="sub">Known Malware</div><div style="font-size:22px;font-weight:700;color:{'#ff4b4b' if found else '#21c55d'};">{'YES' if found else 'NOT FOUND'}</div></div>
+                {"<div><div class='sub'>File Name</div><div style='font-size:13px;'>" + r.get('file_name','?') + "</div></div>" if found else ""}
+                {"<div><div class='sub'>Malware Family</div><div style='font-size:13px;'>" + r.get('signature','?') + "</div></div>" if found else ""}
+                {"<div><div class='sub'>File Type</div><div style='font-size:13px;'>" + r.get('file_type','?') + "</div></div>" if found else ""}
+                {"<div><div class='sub'>Tags</div><div style='font-size:13px;'>" + tags + "</div></div>" if found else ""}
+            </div>
+            <div style="font-size:14px;font-weight:600;color:{'#ff4b4b' if found else '#888'};">→ {verdict}</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -528,23 +559,112 @@ def _render_ioc_lookup(result: dict):
         st.markdown(f'<div class="card info"><div class="label">NVD</div><div class="plain">Lookup skipped: {nvd_r.get("reason","")}</div></div>', unsafe_allow_html=True)
 
 
-def _save_report(parsed: dict, score_result: dict, techniques: list, report: dict):
-    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+def _build_md(parsed: dict, score_result: dict, techniques: list, report: dict) -> str:
     subject = parsed.get("subject", "alert")[:40].replace("/", "-")
-    filename = REPORTS_DIR / f"{ts}_{subject}.md"
     lines = [
-        f"# SOC Report — {subject}",
+        f"# ThreatScope Report — {subject}",
         f"**Date:** {datetime.now().isoformat()}",
         f"**Risk Score:** {score_result['score']}/100 ({score_result['level']})",
         "", "## Executive Summary", report.get("executive_summary", ""),
         "", "## Technical Findings", *[f"- {f}" for f in report.get("technical_findings", [])],
-        "", "## MITRE ATT&CK", *[f"- [{t['id']}] {t['name']}: {MITRE_PLAIN.get(t['id'],'')}" for t in techniques],
+        "", "## MITRE ATT&CK Techniques",
+        *[f"- **[{t['id']}] {t['name']}** ({t['confidence']} confidence) — {MITRE_PLAIN.get(t['id'],'')}" for t in techniques],
+        "", "## Score Breakdown",
+        *[f"- {k.replace('_',' ').title()}: +{v}" for k, v in score_result['breakdown'].items() if v > 0],
         "", "## Recommended Actions", *[f"- {a}" for a in report.get("recommended_actions", [])],
         "", "## Analyst Notes", report.get("analyst_notes", ""),
-        "", "---", "_Defensive security education only. Validate all findings manually._",
+        "", "---",
+        "_Generated by ThreatScope. All findings require human review before taking action._",
+        "_Defensive security education only._",
     ]
-    filename.write_text("\n".join(lines))
-    st.success(f"Report saved: `{filename.name}`")
+    return "\n".join(lines)
+
+def _render_header_visualizer(parsed: dict):
+    hops = parsed.get("received_hops", 0)
+    spf  = parsed.get("spf", "unknown")
+    dkim = parsed.get("dkim", "unknown")
+    dmarc= parsed.get("dmarc", "unknown")
+
+    if not hops and spf == "unknown":
+        return
+
+    st.markdown('<div class="section">Email Header Analysis</div>', unsafe_allow_html=True)
+    st.markdown('<div class="plain" style="margin-bottom:10px;">Email headers reveal the true path a message took to reach you. Failures in authentication checks (SPF, DKIM, DMARC) are strong indicators the email is not from who it claims to be.</div>', unsafe_allow_html=True)
+
+    def _auth_badge(name, val):
+        if val == "pass":   return f'<span class="badge b-grn">✅ {name}: PASS</span>'
+        if val == "fail":   return f'<span class="badge b-red">❌ {name}: FAIL</span>'
+        return f'<span class="badge b-gry">❓ {name}: {val.upper()}</span>'
+
+    auth_html = _auth_badge("SPF", spf) + _auth_badge("DKIM", dkim) + _auth_badge("DMARC", dmarc)
+    mismatch = parsed.get("sender_mismatch", False)
+
+    st.markdown(f"""
+    <div class="card {'critical' if (spf=='fail' and dkim=='fail') else 'medium' if (spf=='fail' or dkim=='fail') else 'clean'}">
+        <div class="label">Authentication Results</div>
+        <div style="margin:10px 0;">{auth_html}</div>
+        <div class="plain">
+            {'⚠️ All three authentication checks failed — this email almost certainly did not come from a legitimate server.' if spf=='fail' and dkim=='fail' and dmarc=='fail'
+             else '⚠️ One or more authentication checks failed — treat this email with suspicion.' if 'fail' in [spf,dkim,dmarc]
+             else '✅ Authentication checks passed.'}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if mismatch:
+        frm  = parsed.get("from", "unknown")
+        rply = parsed.get("reply_to", "unknown")
+        st.markdown(f"""
+        <div class="card high" style="margin-top:8px;">
+            <div class="label">Sender Domain Mismatch</div>
+            <div style="display:flex;gap:20px;margin:10px 0;flex-wrap:wrap;">
+                <div><div class="sub">From</div><div class="mono" style="color:#ff8c00;">{frm}</div></div>
+                <div style="font-size:20px;color:#555;align-self:center;">≠</div>
+                <div><div class="sub">Reply-To</div><div class="mono" style="color:#ff4b4b;">{rply}</div></div>
+            </div>
+            <div class="plain">The From address and Reply-To address belong to different domains. Replies to this email go to the attacker, not the claimed sender.</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    if hops:
+        st.markdown(f"""
+        <div class="card info" style="margin-top:8px;">
+            <div class="label">Routing Hops</div>
+            <div style="font-size:22px;font-weight:700;margin:6px 0;">{hops} server hop{"s" if hops != 1 else ""}</div>
+            <div class="plain">This email passed through {hops} mail server{"s" if hops != 1 else ""} before arriving. Unusually long routing chains can indicate spoofing or relay abuse.</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+
+def _save_report(parsed: dict, score_result: dict, techniques: list, report: dict):
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    subject = parsed.get("subject", "alert")[:40].replace("/", "-")
+    md_content = _build_md(parsed, score_result, techniques, report)
+    filename = REPORTS_DIR / f"{ts}_{subject}.md"
+    filename.write_text(md_content)
+
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        st.success(f"Report saved: `{filename.name}`")
+    with col2:
+        _pdf_download_button(md_content, f"{ts}_{subject}.pdf")
+
+def _pdf_download_button(md_content: str, filename: str):
+    try:
+        from markdown import markdown
+        from weasyprint import HTML
+        html = markdown(md_content, extensions=["tables", "fenced_code"])
+        styled = f"""
+        <html><head><style>
+        body {{ font-family: sans-serif; padding: 40px; color: #111; }}
+        h1 {{ color: #1a1a2e; }} h2 {{ color: #16213e; border-bottom: 1px solid #ccc; padding-bottom: 4px; }}
+        code {{ background: #f4f4f4; padding: 2px 6px; border-radius: 4px; }}
+        </style></head><body>{html}</body></html>
+        """
+        pdf_bytes = HTML(string=styled).write_pdf()
+        st.download_button("⬇️ Download PDF", pdf_bytes, file_name=filename, mime="application/pdf")
+    except Exception:
+        st.caption("PDF export unavailable — install weasyprint system deps to enable.")
 
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
@@ -553,18 +673,149 @@ with st.sidebar:
     st.markdown("## 🛡️ ThreatScope")
     st.markdown("Local-first security triage tool")
     st.markdown("---")
-    page = st.selectbox("Navigation", ["Email Analyzer", "IOC Lookup", "Alert Triage", "Reports", "Settings"])
+    page = st.selectbox("Navigation", [
+        "Dashboard",
+        "Email Analyzer",
+        "Batch Analysis",
+        "IOC Lookup",
+        "Alert Triage",
+        "Reports",
+        "Settings",
+    ])
     st.markdown("---")
     st.caption(f"Model: `{config.OLLAMA_MODEL}`")
     st.caption(f"VT: {'✅ Connected' if config.VT_API_KEY else '❌ No key'}")
     st.caption(f"AbuseIPDB: {'✅ Connected' if config.ABUSEIPDB_API_KEY else '❌ No key'}")
     st.caption(f"NVD: {'✅ Set' if config.NVD_API_KEY else '⚠️ No key (optional)'}")
+    st.caption(f"MalwareBazaar: {'✅ Connected' if config.MB_API_KEY else '⚠️ No key (optional)'}")
     st.markdown("---")
     st.caption("⚠️ All findings require human review before taking action.")
 
 
+# ── Dashboard ────────────────────────────────────────────────────────────────
+if page == "Dashboard":
+    st.title("📊 Dashboard")
+    st.markdown("Overview of all analyses run with ThreatScope.")
+    st.markdown("---")
+
+    reports = sorted(REPORTS_DIR.glob("*.md"), reverse=True)
+
+    if not reports:
+        st.info("No analyses yet. Run your first analysis on the Email Analyzer or Alert Triage page.")
+    else:
+        scores, levels, dates = [], [], []
+        for r in reports:
+            text = r.read_text()
+            import re as _re
+            score_match = _re.search(r"\*\*Risk Score:\*\* (\d+)/100 \((\w+)\)", text)
+            date_match  = _re.search(r"\*\*Date:\*\* ([\d\-T:\.]+)", text)
+            if score_match:
+                scores.append(int(score_match.group(1)))
+                levels.append(score_match.group(2))
+            if date_match:
+                try:
+                    dates.append(datetime.fromisoformat(date_match.group(1)))
+                except Exception:
+                    pass
+
+        total = len(reports)
+        avg   = round(sum(scores) / len(scores), 1) if scores else 0
+        critical = levels.count("Critical")
+        high     = levels.count("High")
+        medium   = levels.count("Medium")
+        low      = levels.count("Low")
+
+        c1, c2, c3, c4, c5 = st.columns(5)
+        c1.metric("Total Analyses", total)
+        c2.metric("Avg Risk Score", avg)
+        c3.metric("🔴 Critical", critical)
+        c4.metric("🟠 High", high)
+        c5.metric("🟡 Medium / 🟢 Low", f"{medium} / {low}")
+
+        st.markdown("---")
+        st.subheader("Risk Level Distribution")
+        if levels:
+            import pandas as pd
+            dist = {"Critical": critical, "High": high, "Medium": medium, "Low": low}
+            df = pd.DataFrame({"Level": list(dist.keys()), "Count": list(dist.values())})
+            st.bar_chart(df.set_index("Level"))
+
+        st.markdown("---")
+        st.subheader("Recent Analyses")
+        for r in reports[:10]:
+            text = r.read_text()
+            score_match = _re.search(r"\*\*Risk Score:\*\* (\d+)/100 \((\w+)\)", text)
+            s = int(score_match.group(1)) if score_match else 0
+            lv = score_match.group(2) if score_match else "?"
+            col = {"Critical":"#ff4b4b","High":"#ff8c00","Medium":"#ffd700","Low":"#21c55d"}.get(lv,"#aaa")
+            mtime = datetime.fromtimestamp(r.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
+            st.markdown(f"""
+            <div class="card" style="padding:10px 16px;display:flex;justify-content:space-between;align-items:center;">
+                <div><div style="font-size:13px;font-weight:600;">{r.stem[:60]}</div><div class="sub">{mtime}</div></div>
+                <div style="font-size:22px;font-weight:800;color:{col};">{s}<span style="font-size:12px;color:#555;">/100</span></div>
+            </div>
+            """, unsafe_allow_html=True)
+
+
+# ── Batch Analysis ────────────────────────────────────────────────────────────
+elif page == "Batch Analysis":
+    st.title("📂 Batch Email Analysis")
+    st.markdown("Upload multiple `.eml` files at once. ThreatScope will analyze each one and give you a summary table of all results.")
+    st.markdown("---")
+
+    uploaded_files = st.file_uploader(
+        "Upload .eml files",
+        type=["eml"],
+        accept_multiple_files=True,
+    )
+
+    if st.button("🔍 Analyze All", type="primary") and uploaded_files:
+        results = []
+        for i, f in enumerate(uploaded_files):
+            with st.status(f"Analyzing {f.name} ({i+1}/{len(uploaded_files)})...", expanded=False) as s:
+                raw = f.read().decode("utf-8", errors="replace")
+                parsed = parse_raw_email(raw)
+                enrichment = asyncio.run(_enrich(parsed))
+                parsed.update(enrichment)
+                techniques = map_techniques(parsed)
+                parsed["mitre_techniques"] = techniques
+                score_result = score(parsed)
+                parsed["score"] = score_result
+                report = generate_report(parsed)
+                _save_report(parsed, score_result, techniques, report)
+                results.append({
+                    "File": f.name,
+                    "Subject": parsed.get("subject", "unknown")[:50],
+                    "Score": score_result["score"],
+                    "Level": score_result["level"],
+                    "Sender Mismatch": "Yes" if parsed.get("sender_mismatch") else "No",
+                    "IOCs Found": sum(len(v) for v in parsed.get("iocs", {}).values()),
+                    "MITRE Techniques": len(techniques),
+                })
+                s.update(label=f"✅ {f.name} — {score_result['score']}/100 ({score_result['level']})", state="complete")
+
+        st.markdown("---")
+        st.subheader("Batch Results Summary")
+        import pandas as pd
+        df = pd.DataFrame(results)
+        st.dataframe(
+            df.style.map(
+                lambda v: "color: #ff4b4b; font-weight: bold" if v == "Critical"
+                else "color: #ff8c00; font-weight: bold" if v == "High"
+                else "color: #ffd700" if v == "Medium"
+                else "color: #21c55d" if v == "Low" else "",
+                subset=["Level"]
+            ),
+            use_container_width=True,
+        )
+        st.caption("Full reports for each file have been saved to the Reports page.")
+
+    elif not uploaded_files:
+        st.info("Upload one or more .eml files above then click Analyze All.")
+
+
 # ── Email Analyzer ────────────────────────────────────────────────────────────
-if page == "Email Analyzer":
+elif page == "Email Analyzer":
     st.title("📧 Email Analyzer")
     st.markdown("Paste a suspicious email below. The tool will extract any links, attachments, and sender details, check them against threat intelligence databases, and generate a plain-English security report.")
     st.markdown("---")
@@ -612,6 +863,8 @@ if page == "Email Analyzer":
 
         st.markdown("---")
         _render_score(score_result)
+        st.markdown("---")
+        _render_header_visualizer(parsed)
         st.markdown("---")
         col_l, col_r = st.columns(2)
         with col_l:

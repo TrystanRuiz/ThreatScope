@@ -10,6 +10,7 @@ class Config:
     VT_API_KEY = os.getenv("VT_API_KEY", "")
     ABUSEIPDB_API_KEY = os.getenv("ABUSEIPDB_API_KEY", "")
     NVD_API_KEY = os.getenv("NVD_API_KEY", "")
+    MB_API_KEY = os.getenv("MB_API_KEY", "")
 
     VT_CALLS_PER_MINUTE = 4       # free tier hard limit
     ABUSEIPDB_DAILY_LIMIT = 1000  # free tier hard limit

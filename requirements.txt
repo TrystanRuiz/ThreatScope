@@ -7,3 +7,4 @@ python-whois
 python-dotenv
 markdown
 weasyprint
+pandas
