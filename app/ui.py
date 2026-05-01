@@ -1097,9 +1097,8 @@ elif page == "Email Analyzer":
     st.markdown('<div class="page-header"><h1>Email Analyzer</h1><p>Paste a suspicious email to extract IOCs, check threat intelligence, and generate a security report.</p></div>', unsafe_allow_html=True)
     st.markdown("---")
 
-    # Initialize session state for email content
-    if "email_content" not in st.session_state:
-        st.session_state["email_content"] = ""
+    if "email_text_area" not in st.session_state:
+        st.session_state["email_text_area"] = ""
 
     input_method = st.radio("Input method", ["Paste raw email", "Upload .eml file"], horizontal=True)
 
@@ -1109,20 +1108,17 @@ elif page == "Email Analyzer":
     with col2:
         if st.button("Load Sample", use_container_width=True):
             if SAMPLE_PATH.exists():
-                st.session_state["email_content"] = SAMPLE_PATH.read_text()
-                st.rerun()
+                st.session_state["email_text_area"] = SAMPLE_PATH.read_text()
             else:
                 st.error("Sample file not found.")
 
     if input_method == "Paste raw email":
         raw_email = st.text_area(
             "Email content",
-            value=st.session_state["email_content"],
             height=250,
             placeholder="Paste the full email here, including headers if available...",
             key="email_text_area",
         )
-        st.session_state["email_content"] = raw_email
     else:
         uploaded = st.file_uploader("Upload .eml file", type=["eml"])
         raw_email = uploaded.read().decode("utf-8", errors="replace") if uploaded else ""
