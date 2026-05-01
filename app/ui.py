@@ -889,24 +889,398 @@ def _save_report(parsed: dict, score_result: dict, techniques: list, report: dic
     with col1:
         st.success(f"Report saved: `{filename.name}`")
     with col2:
-        _pdf_download_button(md_content, f"{ts}_{subject}.pdf")
+        _pdf_download_button(parsed, score_result, techniques, report, f"{ts}_{subject}.pdf")
 
-def _pdf_download_button(md_content: str, filename: str):
+def _build_pdf_html(parsed: dict, score_result: dict, techniques: list, report: dict) -> str:
+    s       = score_result["score"]
+    level   = score_result["level"]
+    subject = parsed.get("subject", "Security Alert")
+    date    = datetime.now().strftime("%B %d, %Y  %H:%M")
+
+    score_color = {
+        "Critical": "#ef4444",
+        "High":     "#f97316",
+        "Medium":   "#eab308",
+        "Low":      "#22c55e",
+    }.get(level, "#6b7280")
+
+    score_bg = {
+        "Critical": "#1c0a0a",
+        "High":     "#1c1208",
+        "Medium":   "#1a1a08",
+        "Low":      "#0a1c10",
+    }.get(level, "#111")
+
+    def _rows(items, label=""):
+        return "".join(f"<tr><td>{label}</td><td class='mono'>{i}</td></tr>" for i in items) if items else ""
+
+    iocs        = parsed.get("iocs", {})
+    url_rows    = _rows([u.get("defanged", u.get("value","")) if isinstance(u,dict) else u for u in iocs.get("urls",[])],    "URL")
+    domain_rows = _rows([d.get("defanged", d.get("value","")) if isinstance(d,dict) else d for d in iocs.get("domains",[])], "Domain")
+    ip_rows     = _rows([i.get("defanged", i.get("value","")) if isinstance(i,dict) else i for i in iocs.get("ips",[])],     "IP")
+    hash_rows   = _rows([h.get("value","")                    if isinstance(h,dict) else h for h in iocs.get("hashes",[])],  "Hash")
+    cve_rows    = _rows(iocs.get("cves",[]),  "CVE")
+    email_rows  = _rows(iocs.get("emails",[]),"Email")
+    attach_rows = _rows(parsed.get("attachments",[]), "Attachment")
+    all_ioc_rows = url_rows + domain_rows + ip_rows + hash_rows + cve_rows + email_rows + attach_rows
+
+    breakdown_rows = "".join(
+        f"<tr><td>{k.replace('_',' ').title()}</td><td style='color:{score_color}; font-weight:700;'>+{v}</td></tr>"
+        for k, v in score_result["breakdown"].items() if v > 0
+    )
+
+    mitre_rows = "".join(
+        f"<tr><td class='mono' style='color:#3b82f6; font-weight:700;'>{t['id']}</td>"
+        f"<td>{t['name']}</td>"
+        f"<td><span class='badge badge-{'red' if t['confidence']=='high' else 'yellow' if t['confidence']=='medium' else 'gray'}'>{t['confidence'].capitalize()}</span></td>"
+        f"<td style='color:#666; font-size:12px;'>{MITRE_PLAIN.get(t['id'],'')}</td></tr>"
+        for t in techniques
+    ) if techniques else "<tr><td colspan='4' style='color:#999;'>No techniques mapped.</td></tr>"
+
+    findings_html = "".join(f"<li>{f}</li>" for f in report.get("technical_findings", []))
+    actions_html  = "".join(f"<li>{a}</li>" for a in report.get("recommended_actions", []))
+
+    vt_results  = [r for r in parsed.get("vt_results",   []) if not r.get("skipped")]
+    ab_results  = [r for r in parsed.get("abuse_results",[]) if not r.get("skipped")]
+    nvd_results = [r for r in parsed.get("nvd_results",  []) if not r.get("skipped")]
+    wh_results  =  parsed.get("whois_results", [])
+
+    def _enrich_row(label, ioc, value, note=""):
+        return f"<tr><td>{label}</td><td class='mono' style='font-size:11px;'>{ioc}</td><td>{value}</td><td style='color:#666; font-size:12px;'>{note}</td></tr>"
+
+    enrich_rows = ""
+    for r in vt_results:
+        mal = r.get("malicious",0); total = mal + r.get("suspicious",0) + r.get("harmless",0)
+        enrich_rows += _enrich_row("VirusTotal", r.get("ioc",""), f"{mal} / {total} vendors", "Malicious" if mal >= 3 else "Suspicious" if mal >= 1 else "Clean")
+    for r in ab_results:
+        enrich_rows += _enrich_row("AbuseIPDB", r.get("ioc",""), f"{r.get('abuse_confidence',0)}% confidence", f"{r.get('total_reports',0)} reports / {r.get('country','?')}")
+    for r in wh_results:
+        age = r.get("age_days"); new = r.get("newly_registered",False)
+        enrich_rows += _enrich_row("WHOIS", r.get("domain",""), f"{age} days old" if age else "unknown", "Newly registered" if new else "")
+    for r in nvd_results:
+        enrich_rows += _enrich_row("NVD", r.get("ioc",""), f"CVSS {r.get('cvss_score',0)}", r.get("severity","?").capitalize())
+
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+
+  body {{
+    font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    color: #1a1a2e;
+    font-size: 13px;
+    line-height: 1.6;
+  }}
+
+  /* ── Cover page ── */
+  .cover {{
+    background: #0d1b2e;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 70px;
+    position: relative;
+    overflow: hidden;
+    page-break-after: always;
+  }}
+  .cover-circle-tl {{
+    position: absolute; top: -60px; left: -60px;
+    width: 280px; height: 280px;
+    border-radius: 50%;
+    background: #1e4080;
+    opacity: 0.7;
+  }}
+  .cover-circle-br {{
+    position: absolute; bottom: -80px; right: -80px;
+    width: 340px; height: 340px;
+    border-radius: 50%;
+    background: #1e4080;
+    opacity: 0.5;
+  }}
+  .cover-line {{
+    border: none;
+    border-top: 1px solid #2a4a70;
+    margin: 32px 0;
+  }}
+  .cover-title {{
+    font-size: 48px;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -1px;
+    position: relative;
+    z-index: 1;
+  }}
+  .cover-subtitle {{
+    font-size: 20px;
+    color: #90afd4;
+    margin-top: 10px;
+    font-weight: 400;
+    position: relative;
+    z-index: 1;
+  }}
+  .cover-meta {{
+    font-size: 13px;
+    color: #5a7a9a;
+    position: relative;
+    z-index: 1;
+    line-height: 2;
+  }}
+  .cover-score-box {{
+    display: inline-block;
+    background: {score_bg};
+    border: 2px solid {score_color};
+    border-radius: 12px;
+    padding: 16px 28px;
+    margin-top: 24px;
+    position: relative;
+    z-index: 1;
+  }}
+  .cover-score-label {{ font-size: 11px; color: #5a7a9a; text-transform: uppercase; letter-spacing: 1.5px; }}
+  .cover-score-num {{ font-size: 52px; font-weight: 900; color: {score_color}; line-height: 1; }}
+  .cover-score-level {{ font-size: 18px; font-weight: 700; color: {score_color}; margin-top: 4px; }}
+
+  /* ── Content pages ── */
+  .page {{
+    padding: 56px 70px;
+    page-break-before: always;
+  }}
+  .page-header {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 14px;
+    margin-bottom: 36px;
+  }}
+  .page-header-brand {{
+    font-size: 13px;
+    font-weight: 700;
+    color: #3b82f6;
+    letter-spacing: 0.5px;
+  }}
+  .page-header-date {{
+    font-size: 11px;
+    color: #9ca3af;
+  }}
+
+  /* ── Section ── */
+  .section-title {{
+    font-size: 11px;
+    font-weight: 700;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin: 32px 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f3f4f6;
+  }}
+
+  /* ── Summary box ── */
+  .summary-box {{
+    background: #eff6ff;
+    border-left: 4px solid #3b82f6;
+    border-radius: 0 8px 8px 0;
+    padding: 16px 20px;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #1e3a5f;
+    line-height: 1.7;
+  }}
+
+  /* ── Callout boxes ── */
+  .callout {{
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 8px 0;
+    font-size: 13px;
+  }}
+  .callout-warn {{
+    background: #fff7ed;
+    border-left: 4px solid #f97316;
+    color: #7c2d12;
+  }}
+  .callout-note {{
+    background: #f8fafc;
+    border-left: 4px solid #94a3b8;
+    color: #475569;
+  }}
+
+  /* ── Tables ── */
+  table {{
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0;
+    font-size: 12px;
+  }}
+  th {{
+    background: #f8fafc;
+    color: #6b7280;
+    font-weight: 600;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 2px solid #e5e7eb;
+  }}
+  td {{
+    padding: 10px 14px;
+    border-bottom: 1px solid #f3f4f6;
+    color: #374151;
+    vertical-align: top;
+  }}
+  tr:last-child td {{ border-bottom: none; }}
+  tr:hover td {{ background: #f9fafb; }}
+
+  /* ── Lists ── */
+  ul {{ padding-left: 20px; margin: 6px 0; }}
+  li {{ margin: 6px 0; color: #374151; }}
+  li::marker {{ color: #3b82f6; }}
+
+  /* ── Mono ── */
+  .mono {{
+    font-family: 'SF Mono', 'Cascadia Code', 'Courier New', monospace;
+    font-size: 11px;
+    color: #374151;
+  }}
+
+  /* ── Badges ── */
+  .badge {{
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }}
+  .badge-red    {{ background: #fee2e2; color: #dc2626; }}
+  .badge-yellow {{ background: #fef9c3; color: #a16207; }}
+  .badge-gray   {{ background: #f3f4f6; color: #6b7280; }}
+  .badge-green  {{ background: #dcfce7; color: #15803d; }}
+
+  /* ── Footer ── */
+  .footer {{
+    margin-top: 48px;
+    padding-top: 16px;
+    border-top: 1px solid #e5e7eb;
+    font-size: 10px;
+    color: #9ca3af;
+    text-align: center;
+    line-height: 1.8;
+  }}
+</style>
+</head>
+<body>
+
+<!-- ── Cover page ── -->
+<div class="cover">
+  <div class="cover-circle-tl"></div>
+  <div class="cover-circle-br"></div>
+
+  <div style="position:relative; z-index:1;">
+    <div class="cover-title">ThreatScope</div>
+    <div class="cover-subtitle">Security Investigation Report</div>
+    <hr class="cover-line">
+    <div class="cover-meta">
+      Subject: {subject}<br>
+      Generated: {date}<br>
+      Classification: Confidential
+    </div>
+    <div class="cover-score-box">
+      <div class="cover-score-label">Overall Risk Score</div>
+      <div class="cover-score-num">{s}<span style="font-size:24px; font-weight:400; color:#2a4a70;">/100</span></div>
+      <div class="cover-score-level">{level} Risk</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Page 2: Executive Summary + Score ── -->
+<div class="page">
+  <div class="page-header">
+    <span class="page-header-brand">ThreatScope</span>
+    <span class="page-header-date">{date}</span>
+  </div>
+
+  <div class="section-title">Executive Summary</div>
+  <div class="summary-box">{report.get("executive_summary","No summary generated.")}</div>
+
+  <div class="section-title">Risk Score Breakdown</div>
+  <table>
+    <thead><tr><th>Signal</th><th>Points</th></tr></thead>
+    <tbody>{breakdown_rows if breakdown_rows else "<tr><td colspan='2' style='color:#999;'>No signals triggered.</td></tr>"}</tbody>
+  </table>
+
+  <div class="section-title">Technical Findings</div>
+  {"<ul>" + findings_html + "</ul>" if findings_html else '<p style="color:#999;">No findings.</p>'}
+
+  <div class="footer">
+    ThreatScope — Defensive security education only. All findings require human review before taking action.
+  </div>
+</div>
+
+<!-- ── Page 3: IOCs + Threat Intel ── -->
+<div class="page">
+  <div class="page-header">
+    <span class="page-header-brand">ThreatScope</span>
+    <span class="page-header-date">{date}</span>
+  </div>
+
+  <div class="section-title">Indicators of Compromise</div>
+  {"<table><thead><tr><th>Type</th><th>Indicator (Defanged)</th></tr></thead><tbody>" + all_ioc_rows + "</tbody></table>" if all_ioc_rows else '<p style="color:#999;">No IOCs extracted.</p>'}
+
+  <div class="section-title">Threat Intelligence</div>
+  {"<table><thead><tr><th>Source</th><th>Indicator</th><th>Result</th><th>Notes</th></tr></thead><tbody>" + enrich_rows + "</tbody></table>" if enrich_rows else '<p style="color:#999;">No enrichment results (offline mode or missing API keys).</p>'}
+
+  <div class="footer">
+    ThreatScope — Defensive security education only. All findings require human review before taking action.
+  </div>
+</div>
+
+<!-- ── Page 4: MITRE + Actions + Notes ── -->
+<div class="page">
+  <div class="page-header">
+    <span class="page-header-brand">ThreatScope</span>
+    <span class="page-header-date">{date}</span>
+  </div>
+
+  <div class="section-title">MITRE ATT&CK Techniques</div>
+  <table>
+    <thead><tr><th>ID</th><th>Technique</th><th>Confidence</th><th>Description</th></tr></thead>
+    <tbody>{mitre_rows}</tbody>
+  </table>
+
+  <div class="section-title">Recommended Actions</div>
+  {"<ul>" + actions_html + "</ul>" if actions_html else '<p style="color:#999;">No actions generated.</p>'}
+
+  {"<div class='section-title'>Analyst Notes</div><div class='callout callout-note'>" + report.get('analyst_notes','') + "</div>" if report.get('analyst_notes') else ""}
+
+  <div class="callout callout-warn" style="margin-top:32px;">
+    All findings generated by ThreatScope are investigative aids and require human review before any action is taken.
+    Risk scores, MITRE mappings, and AI-generated summaries are not authoritative determinations.
+  </div>
+
+  <div class="footer">
+    ThreatScope — Local-first AI security triage tool.<br>
+    Not affiliated with MITRE, VirusTotal, AbuseIPDB, or the National Vulnerability Database.<br>
+    Defensive security education only.
+  </div>
+</div>
+
+</body>
+</html>"""
+
+
+def _pdf_download_button(parsed: dict, score_result: dict, techniques: list, report: dict, filename: str):
     try:
-        from markdown import markdown
         from weasyprint import HTML
-        html = markdown(md_content, extensions=["tables", "fenced_code"])
-        styled = f"""
-        <html><head><style>
-        body {{ font-family: sans-serif; padding: 40px; color: #111; }}
-        h1 {{ color: #1a1a2e; }} h2 {{ color: #16213e; border-bottom: 1px solid #ccc; padding-bottom: 4px; }}
-        code {{ background: #f4f4f4; padding: 2px 6px; border-radius: 4px; }}
-        </style></head><body>{html}</body></html>
-        """
-        pdf_bytes = HTML(string=styled).write_pdf()
-        st.download_button("⬇️ Download PDF", pdf_bytes, file_name=filename, mime="application/pdf")
-    except Exception:
-        st.caption("PDF export unavailable — install weasyprint system deps to enable.")
+        html = _build_pdf_html(parsed, score_result, techniques, report)
+        pdf_bytes = HTML(string=html).write_pdf()
+        st.download_button("Download PDF", pdf_bytes, file_name=filename, mime="application/pdf")
+    except Exception as e:
+        st.caption(f"PDF export unavailable: {e}")
 
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
