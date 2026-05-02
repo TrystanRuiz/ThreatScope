@@ -1,10 +1,10 @@
-# ThreatScope
+# TriageAI
 
 > Local-first AI-powered phishing analysis and security alert triage tool.
 
 ---
 
-ThreatScope is a local-first security triage assistant that analyzes suspicious emails and security alerts, extracts and defangs indicators of compromise (IOCs), enriches them with real threat intelligence, maps findings to MITRE ATT&CK, and assigns an explainable risk score. It generates a plain-English SOC-style investigation report without sending your data to a cloud AI service.
+TriageAI is a local-first security triage assistant that analyzes suspicious emails and security alerts, extracts and defangs indicators of compromise (IOCs), enriches them with real threat intelligence, maps findings to MITRE ATT&CK, and assigns an explainable risk score. It generates a plain-English SOC-style investigation report without sending your data to a cloud AI service.
 
 Built for SOC analysts, security students, and homelab operators who want a practical AI security tool they can run on their own machine.
 
@@ -113,8 +113,8 @@ Python handles all evidence collection, IOC extraction, API calls, and scoring. 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/TrystanRuiz/ThreatScope.git
-cd ThreatScope
+git clone https://github.com/TrystanRuiz/TriageAI.git
+cd TriageAI
 ```
 
 ### 2. Pull the AI model
@@ -170,11 +170,11 @@ NVD_API_KEY=your_nvd_key_here
 MB_API_KEY=your_malwarebazaar_key_here
 ```
 
-### 5. Run ThreatScope
+### 5. Run TriageAI
 
 **macOS — double-click launcher:**
 
-Double-click `ThreatScope.command` in the project folder. It will start Ollama if it isn't already running, activate the virtual environment, and open the app automatically.
+Double-click `TriageAI.command` in the project folder. It will start Ollama if it isn't already running, activate the virtual environment, and open the app automatically.
 
 **Or run manually:**
 
@@ -195,20 +195,20 @@ Open [http://localhost:8501](http://localhost:8501) in your browser.
 | MalwareBazaar | No | No hard limit | [bazaar.abuse.ch](https://bazaar.abuse.ch) |
 | NVD | No | Faster with key | [nvd.nist.gov](https://nvd.nist.gov/developers/request-an-api-key) |
 
-ThreatScope respects all free tier limits automatically via built-in rate limiting. IOCs are deduplicated before API calls to avoid wasting quota.
+TriageAI respects all free tier limits automatically via built-in rate limiting. IOCs are deduplicated before API calls to avoid wasting quota.
 
 ---
 
 ## Running Without API Keys
 
-Set `OFFLINE_MODE=true` in your `.env` to run ThreatScope without any API keys. All enrichment lookups will be skipped, but parsing, IOC extraction, MITRE mapping, scoring, and LLM report generation will still work.
+Set `OFFLINE_MODE=true` in your `.env` to run TriageAI without any API keys. All enrichment lookups will be skipped, but parsing, IOC extraction, MITRE mapping, scoring, and LLM report generation will still work.
 
 ---
 
 ## Project Structure
 
 ```
-ThreatScope/
+TriageAI/
 ├── app/
 │   ├── ui.py                   # Streamlit app entry point
 │   ├── agents/
@@ -249,13 +249,13 @@ ThreatScope/
 
 ## Limitations and Responsible Use
 
-- **ThreatScope is a defensive analysis tool.** It is designed to help analysts understand suspicious content, not to generate phishing content, automate attacks, bypass security controls, or assist with any offensive activity.
-- **All findings require human review.** Risk scores, MITRE mappings, and LLM-generated reports are investigative aids and not authoritative determinations. Never take action based solely on ThreatScope output without independent verification.
+- **TriageAI is a defensive analysis tool.** It is designed to help analysts understand suspicious content, not to generate phishing content, automate attacks, bypass security controls, or assist with any offensive activity.
+- **All findings require human review.** Risk scores, MITRE mappings, and LLM-generated reports are investigative aids and not authoritative determinations. Never take action based solely on TriageAI output without independent verification.
 - **The LLM can hallucinate.** The local model is instructed to use only the provided evidence, but it may still produce inaccurate or misleading statements. Always cross-reference findings manually.
 - **Threat intelligence is not exhaustive.** A clean result from VirusTotal or AbuseIPDB does not guarantee that an indicator is safe. New threats may not yet be cataloged.
 - **Do not submit real sensitive data to external APIs.** If enrichment is enabled, IOC values are sent to third-party services. Do not submit client data, internal IP ranges, or proprietary information without authorization.
 - **WHOIS data may be incomplete.** WHOIS records are inconsistent across registrars. Missing registration data should be treated as unknown, not automatically suspicious.
-- **Free API tier limits apply.** ThreatScope includes built-in rate limiting and deduplication to respect free tier quotas, but heavy usage may exhaust daily limits.
+- **Free API tier limits apply.** TriageAI includes built-in rate limiting and deduplication to respect free tier quotas, but heavy usage may exhaust daily limits.
 
 ---
 
@@ -263,7 +263,7 @@ ThreatScope/
 
 The `app/data/sample_emails/` directory contains synthetic phishing email samples for testing. These are entirely fictional and safe to use.
 
-Do not test ThreatScope with real employee or customer emails, internal corporate logs, private IP ranges, or any data you do not have authorization to analyze.
+Do not test TriageAI with real employee or customer emails, internal corporate logs, private IP ranges, or any data you do not have authorization to analyze.
 
 ---
 
@@ -275,4 +275,4 @@ Copyright (c) 2026 Trystan Ruiz
 
 ---
 
-> ThreatScope is a portfolio and educational project. It is not affiliated with or endorsed by MITRE, VirusTotal, AbuseIPDB, or the National Vulnerability Database.
+> TriageAI is a portfolio and educational project. It is not affiliated with or endorsed by MITRE, VirusTotal, AbuseIPDB, or the National Vulnerability Database.
