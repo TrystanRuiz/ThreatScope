@@ -1275,10 +1275,35 @@ if page == "Dashboard":
         st.markdown("---")
         st.subheader("Risk Level Distribution")
         if levels:
-            import pandas as pd
-            dist = {"Critical": critical, "High": high, "Medium": medium, "Low": low}
-            df = pd.DataFrame({"Level": list(dist.keys()), "Count": list(dist.values())})
-            st.bar_chart(df.set_index("Level"))
+            import plotly.graph_objects as go
+            risk_order  = ["Critical", "High", "Medium", "Low"]
+            risk_colors = {"Critical": "#ff4b4b", "High": "#ff8c00", "Medium": "#ffd700", "Low": "#21c55d"}
+            counts = [{"Critical": critical, "High": high, "Medium": medium, "Low": low}[l] for l in risk_order]
+            fig = go.Figure(go.Bar(
+                x=risk_order,
+                y=counts,
+                marker_color=[risk_colors[l] for l in risk_order],
+                text=counts,
+                textposition="outside",
+                textfont=dict(size=14, color="#e0e0e0"),
+            ))
+            fig.update_layout(
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                font=dict(color="#e0e0e0", size=13),
+                xaxis=dict(showgrid=False, tickfont=dict(size=14, color="#e0e0e0")),
+                yaxis=dict(
+                    showgrid=True,
+                    gridcolor="rgba(255,255,255,0.07)",
+                    zeroline=False,
+                    tickfont=dict(color="#888"),
+                    range=[0, max(counts) * 1.25 if max(counts) > 0 else 5],
+                ),
+                margin=dict(l=20, r=20, t=20, b=20),
+                height=300,
+                bargap=0.35,
+            )
+            st.plotly_chart(fig, use_container_width=True)
 
         st.markdown("---")
         st.subheader("Recent Analyses")

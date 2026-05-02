@@ -12,7 +12,21 @@ Built for SOC analysts, security students, and homelab operators who want a prac
 
 ## Screenshots
 
-> Screenshots coming soon.
+**Dashboard** — analytics overview with risk level distribution across all analyses
+
+![Dashboard](screenshots/dashboard.png)
+
+**Email Analyzer** — risk score, SPF/DKIM/DMARC header analysis, and sender mismatch detection
+
+![Email Analyzer Results](screenshots/email_analyzer_results.png)
+
+**Score Breakdown & MITRE ATT&CK** — per-signal scoring explanation alongside mapped ATT&CK techniques
+
+![Score Breakdown and MITRE ATT&CK](screenshots/score_breakdown_mitre.png)
+
+**IOC Lookup** — one-off indicator enrichment via VirusTotal and AbuseIPDB
+
+![IOC Lookup](screenshots/ioc_lookup.png)
 
 ---
 
