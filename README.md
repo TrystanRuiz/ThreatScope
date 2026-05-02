@@ -172,6 +172,12 @@ MB_API_KEY=your_malwarebazaar_key_here
 
 ### 5. Run ThreatScope
 
+**macOS — double-click launcher:**
+
+Double-click `ThreatScope.command` in the project folder. It will start Ollama if it isn't already running, activate the virtual environment, and open the app automatically.
+
+**Or run manually:**
+
 ```bash
 streamlit run app/ui.py
 ```

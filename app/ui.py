@@ -1202,7 +1202,7 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-    page = st.selectbox("", [
+    page = st.selectbox("Navigation", [
         "Dashboard",
         "Email Analyzer",
         "Batch Analysis",
