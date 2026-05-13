@@ -267,12 +267,4 @@ Do not test TriageAI with real employee or customer emails, internal corporate l
 
 ---
 
-## License
-
-MIT License. See [LICENSE](LICENSE) for full terms.
-
-Copyright (c) 2026 Trystan Ruiz
-
----
-
 > TriageAI is a portfolio and educational project. It is not affiliated with or endorsed by MITRE, VirusTotal, AbuseIPDB, or the National Vulnerability Database.
